@@ -3,5 +3,7 @@ build: domaci.c
 	gcc -c domaci.c
 link: domaci.o
 	gcc -o domaci domaci.o
-clean:
+clean: 
 	rm domaci.o domaci
+run: domaci
+	domaci
