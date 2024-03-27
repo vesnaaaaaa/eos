@@ -197,7 +197,6 @@ int main()
                     	    	printf("Problem pri otvaranju /dev/led\n");
                         	return -1;
                	}
-                	usleep(250000);
 
                 	fputs("0b0000\n", fp_led);
                 	if (fclose(fp_led))
@@ -213,7 +212,6 @@ int main()
                         	printf("Problem pri otvaranju /dev/led\n");
                         	return -1;
                 	}
-                	usleep(250000);
 
                 	fputs("0b0001\n", fp_led);
                 	if (fclose(fp_led))
@@ -221,7 +219,7 @@ int main()
                         	printf("Problem pri zatvaranju /dev/led\n");
                         	return -1;
 			}
-			sleep (0.25);
+			usleep(250000);
 				
 				
 			fp_led = fopen("/dev/led", "w");
@@ -230,7 +228,6 @@ int main()
                         	printf("Problem pri otvaranju /dev/led\n");
                         	return -1;
                 	}
-                	usleep(250000);
 
                 	fputs("0b0010\n", fp_led);
                 	if (fclose(fp_led))
@@ -246,7 +243,6 @@ int main()
                         	printf("Problem pri otvaranju /dev/led\n");
                         	return -1;
                 	}
-                	usleep(250000);
 
                 	fputs("0b0100\n", fp_led);
                 	if (fclose(fp_led))
@@ -262,7 +258,6 @@ int main()
 		                printf("Problem pri otvaranju /dev/led\n");
 		                return -1;
 		        }
-		        usleep(250000);
 
 		        fputs("0b1000\n", fp_led);
 		        if (fclose(fp_led))
@@ -278,7 +273,6 @@ int main()
 		                printf("Problem pri otvaranju /dev/led\n");
 		                return -1;
 		        }
-		        usleep(250000);
 
 		        fputs("0b0100\n", fp_led);
 		        if (fclose(fp_led))
@@ -294,7 +288,6 @@ int main()
 		                printf("Problem pri otvaranju /dev/led\n");
 		                return -1;
 		        }
-		        usleep(250000);
 
 		        fputs("0b0010\n", fp_led);
 		        if (fclose(fp_led))
@@ -310,7 +303,6 @@ int main()
 		                printf("Problem pri otvaranju /dev/led\n");
 		                return -1;
 		        }
-		        usleep(250000);
 
 		        fputs("0b0001\n", fp_led);
 		        if (fclose(fp_led))
@@ -319,13 +311,12 @@ int main()
 		                return -1;
 			}
 			usleep(250000);
-				
                 }
                 else
                 {
                         // Gubitnicka kombinacija
 
-			printf("Ups...pokusajte ponovo!");
+			printf("Ups...pokusajte ponovo!\n");
 		        fp_led = fopen("/dev/led", "w");
 		        if(fp_led == NULL)
 		        {
