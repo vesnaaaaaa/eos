@@ -28,7 +28,7 @@ int main()
                         printf("Problem pri otvaranju /dev/led\n");
                         return -1;
                 }
-                sleep(0.5);
+                sleep(1);
 
                 fputs(kombinacije[0], fp_led);
                 printf("Ispisivanje kombinacije 0\n");
@@ -37,7 +37,7 @@ int main()
                         printf("Problem pri zatvaranju /dev/led\n");
                         return -1;
                 }
-                sleep(0.5);
+                sleep(1);
 
                 //druga kombinacija
 
@@ -73,7 +73,7 @@ int main()
                         return -1;
                 }
 
-                sleep(0.5);
+                sleep(1);
 
                 //gasenje dioda
                 fp_led = fopen("/dev/led", "w");
@@ -89,7 +89,7 @@ int main()
                         printf("Problem pri zatvaranju /dev/led\n");
                         return -1;
                 }
-                sleep(0.5);
+                sleep(1);
 
                 for (int i = 0; i < 3; i++) {
                         fp_taster = fopen("/dev/button", "r");
