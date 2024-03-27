@@ -22,10 +22,10 @@ int main()
                 pobeda = 1;
 
                 //prva kombinacija
-                fp_led = fopen("dev/led", "w");
+                fp_led = fopen("/dev/led", "w");
                 if(fp_led == NULL)
                 {
-                        printf("Problem pri otvaranju dev/led\n");
+                        printf("Problem pri otvaranju /dev/led\n");
                         return -1;
                 }
                 sleep(0.5);
@@ -33,24 +33,24 @@ int main()
                 fputs(kombinacije[0], fp_led);
                 if (fclose(fp_led))
                 {
-                        printf("Problem pri zatvaranju dev/led\n");
+                        printf("Problem pri zatvaranju /dev/led\n");
                         return -1;
                 }
                 sleep(0.5);
 
                 //druga kombinacija
 
-                fp_led = fopen("dev/led", "w");
+                fp_led = fopen("/dev/led", "w");
                 if(fp_led ==NULL)
                 {
-                        printf("Problem pri otvaranju dev/led\n");
+                        printf("Problem pri otvaranju /dev/led\n");
                         return -1;
                 }
 
                 fputs(kombinacije[1], fp_led);
                 if(fclose(fp_led))
                 {
-                        printf ("Problem pri zatvaranju dev/led\n");
+                        printf ("Problem pri zatvaranju /dev/led\n");
                         return -1;
                 }
 
@@ -59,40 +59,40 @@ int main()
                 fp_led = fopen("/dev/led", "w");
                 if (fp_led ==NULL)
                 {
-                        printf("Problem pri otvaranju dev/led\n");
+                        printf("Problem pri otvaranju /dev/led\n");
                         return -1;
                 }
 
                 fputs(kombinacije[2], fp_led);
                 if(fclose(fp_led))
                 {
-                        printf("Problem pri zatvaranju dev/led\n");
+                        printf("Problem pri zatvaranju /dev/led\n");
                         return -1;
                 }
 
                 sleep(0.5);
 
                 //gasenje dioda
-                fp_led = fopen("dev/led", "w");
+                fp_led = fopen("/dev/led", "w");
                 if (fp_led == NULL)
                 {
-                        printf("Problem pri otvaranju  dev/led\n");
+                        printf("Problem pri otvaranju  /dev/led\n");
                         return -1;
                 }
 
                 fputs("0b0000\n", fp_led);
                 if(fclose(fp_led))
                 {
-                        printf("Problem pri zatvaranju dev/led\n");
+                        printf("Problem pri zatvaranju /dev/led\n");
                         return -1;
                 }
                 sleep(0.5);
 
                 for (int i = 0; i < 3; i++) {
-                        fp_taster = fopen("dev/button", "r");
+                        fp_taster = fopen("/dev/button", "r");
                         if (fp_taster == NULL)
                         {
-                                printf("Problem pri otvaranju dev/button\n");
+                                printf("Problem pri otvaranju /dev/button\n");
                                 return -1;
                         }
 
@@ -102,7 +102,7 @@ int main()
                                                                 // (6) bajtova i smestamo u buffer
 
                         if (fclose(fp_taster)) {
-                                printf("Problem pri zatvaranju dev/button\n");
+                                printf("Problem pri zatvaranju /dev/button\n");
                                 return -1;
                         }
 
@@ -111,10 +111,10 @@ int main()
 
                         // Cekamo pritisak prvog tastera
                         while (tval1 != 1) {
-                                fp_taster = fopen("dev/button", "r");
+                                fp_taster = fopen("/dev/button", "r");
                                 if (fp_taster == NULL)
                                 {
-                                        printf("Problem pri otvaranju dev/button\n");
+                                        printf("Problem pri otvaranju /dev/button\n");
                                         return -1;
                                 }
 
@@ -122,7 +122,7 @@ int main()
                                 getline(&buffer, &num_of_bytes, fp_taster); 
 
                                 if (fclose(fp_taster)) {
-                                        printf("Problem pri zatvaranju dev/button\n");
+                                        printf("Problem pri zatvaranju /dev/button\n");
                                         return -1;
                                 }
 
@@ -130,10 +130,10 @@ int main()
                         }
 
                         // Citanje prekidaca
-                        fp_prekidac = fopen("dev/switch", "r");
+                        fp_prekidac = fopen("/dev/switch", "r");
                         if (fp_prekidac == NULL)
                         {
-                                printf("Problem pri otvaranju dev/switch\n");
+                                printf("Problem pri otvaranju /dev/switch\n");
                                 return -1;
                         }
 
@@ -141,7 +141,7 @@ int main()
                         getline(&buffer, &num_of_bytes, fp_prekidac); 
 
                         if (fclose(fp_prekidac)) {
-                                printf("Problem pri zatvaranju dev/switch\n");
+                                printf("Problem pri zatvaranju /dev/switch\n");
                                 return -1;
                         }
                                 
@@ -177,10 +177,10 @@ int main()
                 {
                         // Pobednicka kombinacija
 
-			fp_led = fopen("dev/led", "w");
+			fp_led = fopen("/dev/led", "w");
                 	if(fp_led == NULL)
                 	{
-                    	    	printf("Problem pri otvaranju dev/led\n");
+                    	    	printf("Problem pri otvaranju /dev/led\n");
                         	return -1;
                	}
                 	sleep(0.25);
@@ -188,15 +188,15 @@ int main()
                 	fputs("0b0000\n", fp_led);
                 	if (fclose(fp_led))
                 	{
-                        	printf("Problem pri zatvaranju dev/led\n");
+                        	printf("Problem pri zatvaranju /dev/led\n");
                         	return -1;
 			}
 			sleep(0.25);
 				
-			fp_led = fopen("dev/led", "w");
+			fp_led = fopen("/dev/led", "w");
                 	if(fp_led == NULL)
                 	{
-                        	printf("Problem pri otvaranju dev/led\n");
+                        	printf("Problem pri otvaranju /dev/led\n");
                         	return -1;
                 	}
                 	sleep(0.25);
@@ -204,16 +204,16 @@ int main()
                 	fputs("0b0001\n", fp_led);
                 	if (fclose(fp_led))
                 	{
-                        	printf("Problem pri zatvaranju dev/led\n");
+                        	printf("Problem pri zatvaranju /dev/led\n");
                         	return -1;
 			}
 			sleep (0.25);
 				
 				
-			fp_led = fopen("dev/led", "w");
+			fp_led = fopen("/dev/led", "w");
                	if(fp_led == NULL)
                 	{
-                        	printf("Problem pri otvaranju dev/led\n");
+                        	printf("Problem pri otvaranju /dev/led\n");
                         	return -1;
                 	}
                 	sleep(0.25);
@@ -221,15 +221,15 @@ int main()
                 	fputs("0b0010\n", fp_led);
                 	if (fclose(fp_led))
                 	{
-                        	printf("Problem pri zatvaranju dev/led\n");
+                        	printf("Problem pri zatvaranju /dev/led\n");
                         	return -1;
 			}
 			sleep(0.25);
 			
-			fp_led = fopen("dev/led", "w");
+			fp_led = fopen("/dev/led", "w");
                	if(fp_led == NULL)
                 	{
-                        	printf("Problem pri otvaranju dev/led\n");
+                        	printf("Problem pri otvaranju /dev/led\n");
                         	return -1;
                 	}
                 	sleep(0.25);
@@ -237,15 +237,15 @@ int main()
                 	fputs("0b0100\n", fp_led);
                 	if (fclose(fp_led))
                 	{
-                        	printf("Problem pri zatvaranju dev/led\n");
+                        	printf("Problem pri zatvaranju /dev/led\n");
                         	return -1;
 			}
 			sleep(0.25);
 			
-			fp_led = fopen("dev/led", "w");
+			fp_led = fopen("/dev/led", "w");
                 	if(fp_led == NULL)
 		        {
-		                printf("Problem pri otvaranju dev/led\n");
+		                printf("Problem pri otvaranju /dev/led\n");
 		                return -1;
 		        }
 		        sleep(0.25);
@@ -253,15 +253,15 @@ int main()
 		        fputs("0b1000\n", fp_led);
 		        if (fclose(fp_led))
 		        {
-		                printf("Problem pri zatvaranju dev/led\n");
+		                printf("Problem pri zatvaranju /dev/led\n");
 		                return -1;
 					}
 					sleep(0.25);
 					
-					fp_led = fopen("dev/led", "w");
+					fp_led = fopen("/dev/led", "w");
 		        if(fp_led == NULL)
 		        {
-		                printf("Problem pri otvaranju dev/led\n");
+		                printf("Problem pri otvaranju /dev/led\n");
 		                return -1;
 		        }
 		        sleep(0.25);
@@ -269,15 +269,15 @@ int main()
 		        fputs("0b0100\n", fp_led);
 		        if (fclose(fp_led))
 		        {
-		                printf("Problem pri zatvaranju dev/led\n");
+		                printf("Problem pri zatvaranju /dev/led\n");
 		                return -1;
 					}
 					sleep(0.25);
 					
-					fp_led = fopen("dev/led", "w");
+					fp_led = fopen("/dev/led", "w");
 		        if(fp_led == NULL)
 		        {
-		                printf("Problem pri otvaranju dev/led\n");
+		                printf("Problem pri otvaranju /dev/led\n");
 		                return -1;
 		        }
 		        sleep(0.25);
@@ -285,14 +285,14 @@ int main()
 		        fputs("0b0010\n", fp_led);
 		        if (fclose(fp_led))
 		        {
-		                printf("Problem pri zatvaranju dev/led\n");
+		                printf("Problem pri zatvaranju /dev/led\n");
 		                return -1;
 					}
 					sleep(0.25);
-					fp_led = fopen("dev/led", "w");
+					fp_led = fopen("/dev/led", "w");
 		        if(fp_led == NULL)
 		        {
-		                printf("Problem pri otvaranju dev/led\n");
+		                printf("Problem pri otvaranju /dev/led\n");
 		                return -1;
 		        }
 		        sleep(0.25);
@@ -300,7 +300,7 @@ int main()
 		        fputs("0b0001\n", fp_led);
 		        if (fclose(fp_led))
 			{
-		                printf("Problem pri zatvaranju dev/led\n");
+		                printf("Problem pri zatvaranju /dev/led\n");
 		                return -1;
 			}
 			sleep(0.25);
@@ -310,10 +310,10 @@ int main()
                 {
                         // Gubitnicka kombinacija
 
-		        fp_led = fopen("dev/led", "w");
+		        fp_led = fopen("/dev/led", "w");
 		        if(fp_led == NULL)
 		        {
-		                printf("Problem pri otvaranju dev/led\n");
+		                printf("Problem pri otvaranju /dev/led\n");
 		                return -1;
 		        }
 		        sleep(0.33);
@@ -321,15 +321,15 @@ int main()
 		        fputs("0b0000\n", fp_led);
 		        if (fclose(fp_led))
 		        {
-		                printf("Problem pri zatvaranju dev/led\n");
+		                printf("Problem pri zatvaranju /dev/led\n");
 		                return -1;
 					}
 					sleep(0.33);
 					
-					fp_led = fopen("dev/led", "w");
+					fp_led = fopen("/dev/led", "w");
 		        if(fp_led == NULL)
 		        {
-		                printf("Problem pri otvaranju dev/led\n");
+		                printf("Problem pri otvaranju /dev/led\n");
 		                return -1;
 		        }
 		        sleep(0.25);
@@ -337,15 +337,15 @@ int main()
 		        fputs("0b1111\n", fp_led);
 		        if (fclose(fp_led))
 		        {
-		                printf("Problem pri zatvaranju dev/led\n");
+		                printf("Problem pri zatvaranju /dev/led\n");
 		                return -1;
 					}
 					sleep(0.33);
 					
-					fp_led = fopen("dev/led", "w");
+					fp_led = fopen("/dev/led", "w");
 		        if(fp_led == NULL)
 		        {
-		                printf("Problem pri otvaranju dev/led\n");
+		                printf("Problem pri otvaranju /dev/led\n");
 		                return -1;
 		        }
 		        sleep(0.33);
@@ -353,15 +353,15 @@ int main()
 		        fputs("0b0000\n", fp_led);
 		        if (fclose(fp_led))
 		        {
-		                printf("Problem pri zatvaranju dev/led\n");
+		                printf("Problem pri zatvaranju /dev/led\n");
 		                return -1;
 					}
 					sleep(0.33);
 					
-					fp_led = fopen("dev/led", "w");
+					fp_led = fopen("/dev/led", "w");
 		        if(fp_led == NULL)
 		        {
-		                printf("Problem pri otvaranju dev/led\n");
+		                printf("Problem pri otvaranju /dev/led\n");
 		                return -1;
 		        }
 		        sleep(0.33);
@@ -369,15 +369,15 @@ int main()
 		        fputs("0b1111\n", fp_led);
 		        if (fclose(fp_led))
 		        {
-		                printf("Problem pri zatvaranju dev/led\n");
+		                printf("Problem pri zatvaranju /dev/led\n");
 		                return -1;
 					}
 					sleep(0.33);
 					
-					fp_led = fopen("dev/led", "w");
+					fp_led = fopen("/dev/led", "w");
 		        if(fp_led == NULL)
 		        {
-		                printf("Problem pri otvaranju dev/led\n");
+		                printf("Problem pri otvaranju /dev/led\n");
 		                return -1;
 		        }
 		        sleep(0.33);
@@ -385,15 +385,15 @@ int main()
 		        fputs("0b0000\n", fp_led);
 		        if (fclose(fp_led))
 		        {
-		                printf("Problem pri zatvaranju dev/led\n");
+		                printf("Problem pri zatvaranju /dev/led\n");
 		                return -1;
 					}
 					sleep(0.33);
 					
-					fp_led = fopen("dev/led", "w");
+					fp_led = fopen("/dev/led", "w");
 		        if(fp_led == NULL)
 		        {
-		                printf("Problem pri otvaranju dev/led\n");
+		                printf("Problem pri otvaranju /dev/led\n");
 		                return -1;
 		        }
 		        sleep(0.33);						
