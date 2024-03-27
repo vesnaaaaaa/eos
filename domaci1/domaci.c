@@ -28,7 +28,6 @@ int main()
                         printf("Problem pri otvaranju /dev/led\n");
                         return -1;
                 }
-                sleep(2);
 
                 fputs(kombinacije[0], fp_led);
                 printf("Ispisivanje kombinacije 0\n");
@@ -55,6 +54,7 @@ int main()
                         printf ("Problem pri zatvaranju /dev/led\n");
                         return -1;
                 }
+                sleep(2);
 
                 //treca kombinacija
 
@@ -72,7 +72,6 @@ int main()
                         printf("Problem pri zatvaranju /dev/led\n");
                         return -1;
                 }
-
                 sleep(2);
 
                 //gasenje dioda
