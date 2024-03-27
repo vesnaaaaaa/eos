@@ -107,7 +107,14 @@ int main()
                         }
 
                         tval1 = buffer[2] - '0';
+                        tval4 = buffer[5] - '0';
                         free(buffer);
+                        
+                        // Opcija za izlazak
+                        if (tval4 == 1) {
+                        	printf("Kraj igre.\n");
+                        	return 0;
+			 }
 
                         // Cekamo pritisak prvog tastera
                         while (tval1 != 1) {
@@ -127,6 +134,12 @@ int main()
                                 }
 
                                 tval1 = buffer[2] - '0';
+                        	 tval4 = buffer[5] - '0';
+                        	 // Opcija za izlazak
+                        	 if (tval4 == 1) {
+                        		printf("Kraj igre.\n");
+                        		return 0;
+			 	 }
                         }
 
                         // Citanje prekidaca
@@ -177,7 +190,7 @@ int main()
                 if (pobeda == 1)
                 {
                         // Pobednicka kombinacija
-
+			printf("Pobeda!!!");
 			fp_led = fopen("/dev/led", "w");
                 	if(fp_led == NULL)
                 	{
@@ -256,10 +269,10 @@ int main()
 		        {
 		                printf("Problem pri zatvaranju /dev/led\n");
 		                return -1;
-					}
-					usleep(250000);
+			}
+			usleep(250000);
 					
-					fp_led = fopen("/dev/led", "w");
+			fp_led = fopen("/dev/led", "w");
 		        if(fp_led == NULL)
 		        {
 		                printf("Problem pri otvaranju /dev/led\n");
@@ -272,8 +285,8 @@ int main()
 		        {
 		                printf("Problem pri zatvaranju /dev/led\n");
 		                return -1;
-					}
-					usleep(250000);
+			 }
+			 usleep(250000);
 					
 					fp_led = fopen("/dev/led", "w");
 		        if(fp_led == NULL)
@@ -288,9 +301,10 @@ int main()
 		        {
 		                printf("Problem pri zatvaranju /dev/led\n");
 		                return -1;
-					}
-					usleep(250000);
-					fp_led = fopen("/dev/led", "w");
+			 }
+			 usleep(250000);
+			 
+			fp_led = fopen("/dev/led", "w");
 		        if(fp_led == NULL)
 		        {
 		                printf("Problem pri otvaranju /dev/led\n");
@@ -311,6 +325,7 @@ int main()
                 {
                         // Gubitnicka kombinacija
 
+			printf("Ups...pokusajte ponovo!");
 		        fp_led = fopen("/dev/led", "w");
 		        if(fp_led == NULL)
 		        {
