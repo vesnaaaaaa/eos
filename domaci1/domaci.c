@@ -30,7 +30,6 @@ int main()
                 }
 
                 fputs(kombinacije[0], fp_led);
-                printf("Ispisivanje kombinacije 0\n");
                 if (fclose(fp_led))
                 {
                         printf("Problem pri zatvaranju /dev/led\n");
@@ -48,7 +47,6 @@ int main()
                 }
 
                 fputs(kombinacije[1], fp_led);
-                printf("Ispisivanje kombinacije 1\n");
                 if(fclose(fp_led))
                 {
                         printf ("Problem pri zatvaranju /dev/led\n");
@@ -66,7 +64,6 @@ int main()
                 }
 
                 fputs(kombinacije[2], fp_led);
-                printf("Ispisivanje kombinacije 2\n");
                 if(fclose(fp_led))
                 {
                         printf("Problem pri zatvaranju /dev/led\n");
@@ -151,9 +148,11 @@ int main()
                         sval2 = buffer[3] - '0';
                         sval3 = buffer[4] - '0';
                         sval4 = buffer[5] - '0';
+					
+			 
+                	printf("Kombinacija: %d %d %d %d\n", kombinacije[i][2], kombinacije[i][3], kombinacije[i][4], kombinacije[i][5]);
+                	printf("Prekidaci: %d %d %d %d\n", sval1, sval2, sval3, sval4);	
 						
-						
-
                         // Poredjenje sa kombinacijama
                         if ((sval1 == kombinacije[i][2]) &&
                             (sval2 == kombinacije[i][3]) &&
@@ -161,7 +160,6 @@ int main()
                             (sval4 == kombinacije[i][5]))
                         {
                                 // Ako je tacno
-							//  pobeda = 1;
                         }
                         else
                         {
@@ -173,8 +171,7 @@ int main()
 
                 // Da li smo pogodili ili ne?
 				
-				
-				
+					
                 if (pobeda == 1)
                 {
                         // Pobednicka kombinacija
