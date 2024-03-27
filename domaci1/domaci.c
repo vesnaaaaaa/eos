@@ -150,7 +150,7 @@ int main()
                         sval4 = buffer[5] - '0';
 					
 			 
-                	printf("Kombinacija: %d %d %d %d\n", kombinacije[i][2], kombinacije[i][3], kombinacije[i][4], kombinacije[i][5]);
+                	printf("Kombinacija: %d %d %d %d\n", kombinacije[i][2]  - '0', kombinacije[i][3] - '0', kombinacije[i][4] - '0', kombinacije[i][5] - '0');
                 	printf("Prekidaci: %d %d %d %d\n", sval1, sval2, sval3, sval4);	
 						
                         // Poredjenje sa kombinacijama
@@ -160,6 +160,7 @@ int main()
                             (sval4 == kombinacije[i][5] - '0'))
                         {
                                 // Ako je tacno
+                                sleep(2);
                         }
                         else
                         {
