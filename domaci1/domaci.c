@@ -154,10 +154,10 @@ int main()
                 	printf("Prekidaci: %d %d %d %d\n", sval1, sval2, sval3, sval4);	
 						
                         // Poredjenje sa kombinacijama
-                        if ((sval1 == kombinacije[i][2]) &&
-                            (sval2 == kombinacije[i][3]) &&
-                            (sval3 == kombinacije[i][4]) &&
-                            (sval4 == kombinacije[i][5]))
+                        if ((sval1 == kombinacije[i][2] - '0') &&
+                            (sval2 == kombinacije[i][3] - '0') &&
+                            (sval3 == kombinacije[i][4] - '0') &&
+                            (sval4 == kombinacije[i][5] - '0'))
                         {
                                 // Ako je tacno
                         }
