@@ -31,6 +31,7 @@ int main()
                 sleep(0.5);
 
                 fputs(kombinacije[0], fp_led);
+                printf("Ispisivanje kombinacije 0\n");
                 if (fclose(fp_led))
                 {
                         printf("Problem pri zatvaranju /dev/led\n");
@@ -48,6 +49,7 @@ int main()
                 }
 
                 fputs(kombinacije[1], fp_led);
+                printf("Ispisivanje kombinacije 1\n");
                 if(fclose(fp_led))
                 {
                         printf ("Problem pri zatvaranju /dev/led\n");
@@ -64,6 +66,7 @@ int main()
                 }
 
                 fputs(kombinacije[2], fp_led);
+                printf("Ispisivanje kombinacije 2\n");
                 if(fclose(fp_led))
                 {
                         printf("Problem pri zatvaranju /dev/led\n");
