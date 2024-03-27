@@ -21,7 +21,7 @@ int main()
         {
                 pobeda = 1;
 
-                //prva kombinacija
+                // prva kombinacija
                 fp_led = fopen("/dev/led", "w");
                 if(fp_led == NULL)
                 {
@@ -37,7 +37,7 @@ int main()
                 }
                 sleep(2);
 
-                //druga kombinacija
+                // druga kombinacija
 
                 fp_led = fopen("/dev/led", "w");
                 if(fp_led ==NULL)
@@ -54,7 +54,7 @@ int main()
                 }
                 sleep(2);
 
-                //treca kombinacija
+                // treca kombinacija
 
                 fp_led = fopen("/dev/led", "w");
                 if (fp_led ==NULL)
@@ -71,7 +71,7 @@ int main()
                 }
                 sleep(2);
 
-                //gasenje dioda
+                // gasenje dioda
                 fp_led = fopen("/dev/led", "w");
                 if (fp_led == NULL)
                 {
