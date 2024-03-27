@@ -6,4 +6,4 @@ link: domaci.o
 clean: 
 	rm domaci.o domaci
 run: domaci
-	domaci
+	./domaci

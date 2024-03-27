@@ -113,7 +113,69 @@ int main()
                         // Opcija za izlazak
                         if (tval4 == 1) {
                         	printf("Kraj igre.\n");
-                        	return 0;
+                        	
+				fp_led = fopen("/dev/led", "w");
+				if(fp_led == NULL)
+				{
+			    	    	printf("Problem pri otvaranju /dev/led\n");
+			        	return -1;
+		       	}
+
+				fputs("0b0101\n", fp_led);
+				if (fclose(fp_led))
+				{
+			        	printf("Problem pri zatvaranju /dev/led\n");
+			        	return -1;
+				}
+				usleep(250000);
+					
+				fp_led = fopen("/dev/led", "w");
+				if(fp_led == NULL)
+				{
+			        	printf("Problem pri otvaranju /dev/led\n");
+			        	return -1;
+				}
+
+				fputs("0b1010\n", fp_led);
+				if (fclose(fp_led))
+				{
+			        	printf("Problem pri zatvaranju /dev/led\n");
+			        	return -1;
+				}
+				usleep(250000);
+					
+					
+				fp_led = fopen("/dev/led", "w");
+		       	if(fp_led == NULL)
+				{
+			        	printf("Problem pri otvaranju /dev/led\n");
+			        	return -1;
+				}
+
+				fputs("0b0101\n", fp_led);
+				if (fclose(fp_led))
+				{
+			        	printf("Problem pri zatvaranju /dev/led\n");
+			        	return -1;
+				}
+				usleep(250000);
+				
+				fp_led = fopen("/dev/led", "w");
+		       	if(fp_led == NULL)
+				{
+			        	printf("Problem pri otvaranju /dev/led\n");
+			        	return -1;
+				}
+
+				fputs("0b1010\n", fp_led);
+				if (fclose(fp_led))
+				{
+			        	printf("Problem pri zatvaranju /dev/led\n");
+			        	return -1;
+				}
+				usleep(250000);
+				
+                        	return 0; // Izlazak iz programa
 			 }
 
                         // Cekamo pritisak prvog tastera
@@ -135,10 +197,73 @@ int main()
 
                                 tval1 = buffer[2] - '0';
                         	 tval4 = buffer[5] - '0';
+                        	 
                         	 // Opcija za izlazak
                         	 if (tval4 == 1) {
                         		printf("Kraj igre.\n");
-                        		return 0;
+                        		
+					fp_led = fopen("/dev/led", "w");
+					if(fp_led == NULL)
+					{
+				    	    	printf("Problem pri otvaranju /dev/led\n");
+				        	return -1;
+			       	}
+
+					fputs("0b0101\n", fp_led);
+					if (fclose(fp_led))
+					{
+				        	printf("Problem pri zatvaranju /dev/led\n");
+				        	return -1;
+					}
+					usleep(250000);
+						
+					fp_led = fopen("/dev/led", "w");
+					if(fp_led == NULL)
+					{
+				        	printf("Problem pri otvaranju /dev/led\n");
+				        	return -1;
+					}
+
+					fputs("0b1010\n", fp_led);
+					if (fclose(fp_led))
+					{
+				        	printf("Problem pri zatvaranju /dev/led\n");
+				        	return -1;
+					}
+					usleep(250000);
+						
+						
+					fp_led = fopen("/dev/led", "w");
+			       	if(fp_led == NULL)
+					{
+				        	printf("Problem pri otvaranju /dev/led\n");
+				        	return -1;
+					}
+
+					fputs("0b0101\n", fp_led);
+					if (fclose(fp_led))
+					{
+				        	printf("Problem pri zatvaranju /dev/led\n");
+				        	return -1;
+					}
+					usleep(250000);
+					
+					fp_led = fopen("/dev/led", "w");
+			       	if(fp_led == NULL)
+					{
+				        	printf("Problem pri otvaranju /dev/led\n");
+				        	return -1;
+					}
+
+					fputs("0b1010\n", fp_led);
+					if (fclose(fp_led))
+					{
+				        	printf("Problem pri zatvaranju /dev/led\n");
+				        	return -1;
+					}
+					usleep(250000);
+					
+                        		return 0; // Izlazak iz programa
 			 	 }
                         }
 
