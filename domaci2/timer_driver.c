@@ -39,6 +39,12 @@
 #define DRIVER_NAME "timer"
 #define DEVICE_NAME "xilaxitimer"
 
+// 100 MHz => 10ns period => 10ns*100_000 = 1ms
+#define TIMER_INIT_VALUE (0 - 100000)
+
+#define FIVE_MIN_IN_MS (5*60*1000)
+#define TEN_SEC_IN_MS  (10*1000)
+
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_AUTHOR ("Xilinx");
 MODULE_DESCRIPTION("Test Driver for Zynq PL AXI Timer.");
@@ -92,8 +98,11 @@ static struct platform_driver timer_driver = {
 	.remove		= timer_remove,
 };
 
-
 MODULE_DEVICE_TABLE(of, timer_of_match);
+
+// Lokalna promenljiva koja 
+// prati trenutno vreme
+static unsigned int time_ms = 0;
 
 //***************************************************
 // INTERRUPT SERVICE ROUTINE (HANDLER)
@@ -102,15 +111,19 @@ static irqreturn_t xilaxitimer_isr(int irq,void*dev_id)
 {      
 	unsigned int data = 0;
 
-	// Uvecavanje vremena
+	time_ms = time_ms + 1;
 	
-	// Ako dodjemo do 5 minuta, iskljuci tajmer
-	//
-	// Disable Timer
-	// printk(KERN_NOTICE "xilaxitimer_isr: Timer max value reached. Disabling timer\n");
-	// data = ioread32(tp->base_addr + XIL_AXI_TIMER_TCSR_OFFSET);
-	// iowrite32(data & ~(XIL_AXI_TIMER_CSR_ENABLE_TMR_MASK), 
-	// 				tp->base_addr + XIL_AXI_TIMER_TCSR_OFFSET);
+	if (time_ms == FIVE_MIN_IN_MS)
+	{
+		// five minutes passed
+		time_ms = 0;
+		
+		// Disable Timer
+		printk(KERN_NOTICE "xilaxitimer_isr: Timer max value reached. Disabling timer\n");
+		data = ioread32(tp->base_addr + XIL_AXI_TIMER_TCSR_OFFSET);
+		iowrite32(data & ~(XIL_AXI_TIMER_CSR_ENABLE_TMR_MASK), 
+					tp->base_addr + XIL_AXI_TIMER_TCSR_OFFSET);
+	}
 	
 	// Clear Interrupt
 	data = ioread32(tp->base_addr + XIL_AXI_TIMER_TCSR_OFFSET);
@@ -124,9 +137,7 @@ static irqreturn_t xilaxitimer_isr(int irq,void*dev_id)
 
 static void init_timer(void)
 {
-	// Namestiti tako da odbrojava svake
-	// milisekunde
-	unsigned int timer_load = 0;
+	unsigned int timer_load = TIMER_INIT_VALUE;
 	unsigned int data = 0;
 
 	// Disable timer/counter while configuration is in progress
@@ -264,19 +275,66 @@ int timer_close(struct inode *pinode, struct file *pfile)
 
 ssize_t timer_read(struct file *pfile, char __user *buffer, size_t length, loff_t *offset) 
 {
-	// Poslati trenutno vreme aplikaciji
+	int ret;
 	
-	return 0;
+	char temp_buff[BUFF_SIZE] = {0};
+	int len = 0;
+	
+	// cat fifo_module will try to read from file as long as the return value is not 0 so we return 0 (OK) after reading once.
+	if (end_read)
+	{
+		end_read = 0;
+		return OK;
+	}
+	
+	// Pretvoriti `time` u h, m, s, ms 
+	unsigned int h  = 0;
+	unsigned int m  = 0;
+	unsigned int s  = 0;
+	unsigned int ms = 0;
+	// Format: hh:mm:ss.ms:us
+	len = sprintf(temp_buff, "TIMER: %d:%d:%d:%d\n", h, m, s, ms);
+	ret = copy_to_user(buffer, temp_buff, len);
+		
+	if(ret) return -EFAULT;
+	
+	end_read = 1;
+	
+	return len;
 }
 
 ssize_t timer_write(struct file *pfile, const char __user *buffer, size_t length, loff_t *offset) 
 {
-	// Reagovati na komande `toggle`, `inc`, `dec`
+	// Reagujemo na user komande `toggle`, `inc`, `dec`
 	// `toggle` -> startuje tajmer ako je pauziran tj.
 	//			   pauzira ga ako je startovan
 	// `inc`    -> uvecava trenutno vreme za 10 sekundi
 	// `dec`    -> smanjuje trenutno vreme za 10 sekundi
 	//			   ako je  to moguce
+	
+	char input[BUFF_SIZE] = {0};
+	int ret = 0;
+	
+	ret = copy_from_user(input, buffer, length);
+	if(ret) {
+		return -EFAULT;
+	}
+	input[length] = '\0';
+
+	ret = strcmp(input, "toggle");
+	if (ret == 0) {
+		// start/pauza
+	}
+	ret = strcmp(input, "inc");
+	if (ret == 0) {
+		// +10s
+	}
+	ret = strcmp(input, "dec");
+	if (ret == 0) {
+		// -10s ako je moguce
+	}
+	
+	if (ret != 0) printk(KERN_WARNING "Wrong command. Use toggle, inc or dec.");
 	
 	return length;
 }
@@ -341,7 +399,6 @@ static void __exit timer_exit(void)
 	unregister_chrdev_region(my_dev_id,1);
 	printk(KERN_INFO "xilaxitimer_exit: Goodbye, cruel world\n");
 }
-
 
 module_init(timer_init);
 module_exit(timer_exit);
