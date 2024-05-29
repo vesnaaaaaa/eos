@@ -286,7 +286,7 @@ ssize_t timer_read(struct file *pfile, char __user *buffer, size_t length, loff_
 	unsigned int h  = 0;
 
 	// cat fifo_module will try to read from file as long as the return value is not 0 so we return 0 (OK) after reading once.
-	if (end_read = 1)
+	if (end_read == 1)
 	{
 		end_read = 0;
 		return 0;
