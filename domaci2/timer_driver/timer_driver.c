@@ -337,9 +337,7 @@ ssize_t timer_write(struct file *pfile, const char __user *buffer, size_t length
 		timer0_enabled = data & XIL_AXI_TIMER_CSR_ENABLE_TMR_MASK;
 		
 		if (timer0_enabled == 0) {
-			// Start Timer by setting enable signal
-			iowrite32(data | XIL_AXI_TIMER_CSR_ENABLE_TMR_MASK,
-						tp->base_addr + XIL_AXI_TIMER_TCSR_OFFSET);
+			init_timer();
 		}
 		else {
 			// Stop Timer by clearing enable signal
