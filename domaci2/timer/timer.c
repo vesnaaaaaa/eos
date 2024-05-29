@@ -134,7 +134,7 @@ int main()
                 return -1;
             }
 
-            fputs("exit", fp_taster);
+            // fputs("exit", fp_taster);
             
             if(fclose(fp_taster)) {
                 puts("Problem pri zatvaranju /dev/timer");
