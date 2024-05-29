@@ -14,6 +14,7 @@
 #include <linux/slab.h>//kmalloc kfree
 #include <linux/platform_device.h>//platform driver
 #include <linux/ioport.h>//ioremap
+#include <linux/of.h>
 
 #include <linux/interrupt.h> //irqreturn_t, request_irq
 
@@ -84,7 +85,7 @@ struct file_operations my_fops =
 };
 
 static struct of_device_id timer_of_match[] = {
-	{ .compatible = "xlnx,xps-timer-1.00.a", },
+	{ .compatible = "axi_timer", },
 	{ /* end of list */ },
 };
 
@@ -288,7 +289,7 @@ ssize_t timer_read(struct file *pfile, char __user *buffer, size_t length, loff_
 	if (end_read = 1)
 	{
 		end_read = 0;
-		return OK;
+		return 0;
 	}
 	
 	// Pretvoriti `time` u h, m, s, ms
