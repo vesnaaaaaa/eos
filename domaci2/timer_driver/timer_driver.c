@@ -276,7 +276,7 @@ int timer_close(struct inode *pinode, struct file *pfile)
 ssize_t timer_read(struct file *pfile, char __user *buffer, size_t length, loff_t *offset) 
 {
 	char output[BUFF_SIZE] = {0};
-	static int end_read = 0;
+	int end_read = 0;
 	int ret = 0;
 	int len = 0;
 	unsigned int temp_time = 0;
