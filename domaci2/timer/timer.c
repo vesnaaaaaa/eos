@@ -12,33 +12,30 @@ int main()
     
     // 0 b X X X X \0 -> ukupno 7
     size_t num_of_bytes_taster = 7;
-    // hh(2) :(1) mm(2) :(1) ss(2) :(1) ms(3) \n -> ukupno 13
+    // hh(2) :(1) mm(2) :(1) ss(2) :(1) ms(3) \0 -> ukupno 13
     size_t num_of_bytes_time = 13;
 
     int should_print_time = 0;
+    int ready_to_print = 1;
 
-    // TODO 
-    // Ispisati trenutno vreme?
-
-    // fp_taster = fopen("/dev/timer", "r");
-    // if(fp_taster == NULL) {
-    //     puts("Problem pri otvaranju /dev/timer");
-    //     return -1;
-    // }
+    fp_taster = fopen("/dev/timer", "r");
+    if(fp_taster == NULL) {
+        puts("Problem pri otvaranju /dev/timer");
+        return -1;
+    }
     
-    // buffer = (char*)malloc(num_of_bytes_time);
-    // getline(&buffer, &num_of_bytes_time, fp_taster);
+    buffer = (char*)malloc(num_of_bytes_time);
+    getline(&buffer, &num_of_bytes_time, fp_taster);
     
-    // if(fclose(fp_taster)) {
-    //     puts("Problem pri zatvaranju /dev/timer");
-    //     return -1;
-    // }
+    if(fclose(fp_taster)) {
+        puts("Problem pri zatvaranju /dev/timer");
+        return -1;
+    }
 
-    // // Ucitavanje vremena u lokalnu promenljivu
+    // Ispisivanje trenutnog vremena
+    printf("Trenutno vreme: %s\n", buffer);
 
-    // // Ispisivanje trenutnog vremena
-
-    // free(buffer);
+    free(buffer);
 
     while(1)
     {
@@ -62,12 +59,13 @@ int main()
         tval4 = buffer[5] - 48;
         free(buffer);
 
-        printf("Vrednosti tastera: %d %d %d %d\n", tval1,tval2,tval3,tval4);
         sleep(1);
 
         // Start/pauza
         if (tval1 == 1) {
-            should_print_time = 1;
+            if (ready_to_print == 1) {
+                should_print_time = 1;
+            }
             printf("Taster 1 je pritisnut\n");
             
             fp_taster = fopen("/dev/timer", "w");
@@ -84,8 +82,10 @@ int main()
             }
         }
         // dec
-        if (tval2 == 1) {
-            should_print_time = 1;
+        else if (tval2 == 1) {
+            if (ready_to_print == 1) {
+                should_print_time = 1;
+            }
             printf("Taster 2 je pritisnut\n");
             
             fp_taster = fopen("/dev/timer", "w");
@@ -102,8 +102,10 @@ int main()
             }
         }
         // inc
-        if (tval3 == 1) {
-            should_print_time = 1;
+        else if (tval3 == 1) {
+            if (ready_to_print == 1) {
+                should_print_time = 1;
+            }
             printf("Taster 3 je pritisnut\n");
             
             fp_taster = fopen("/dev/timer", "w");
@@ -120,8 +122,10 @@ int main()
             }
         }
         // exit
-        if (tval4 == 1) {
-            should_print_time = 1;
+        else if (tval4 == 1) {
+            if (ready_to_print == 1) {
+                should_print_time = 1;
+            }
             printf("Taster 4 je pritisnut\n");
             
             fp_taster = fopen("/dev/timer", "w");
@@ -140,6 +144,9 @@ int main()
             // Izlaz iz programa
             return 0;
         }
+        else {
+            ready_to_print = 1;
+        }
 
         if (should_print_time == 1) {
             fp_taster = fopen("/dev/timer", "r");
@@ -156,13 +163,13 @@ int main()
                 return -1;
             }
 
-            // Ucitavanje vremena u lokalnu promenljivu
-
             // Ispisivanje trenutnog vremena
-
-            free(buffer);
+            printf("Trenutno vreme: %s\n", buffer);
 
             should_print_time = 0;
+            ready_to_print = 0;
+
+            free(buffer);
         }
     }
 }

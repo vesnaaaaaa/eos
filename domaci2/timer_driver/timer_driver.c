@@ -161,11 +161,10 @@ static void init_timer(void)
 	iowrite32(XIL_AXI_TIMER_CSR_ENABLE_INT_MASK | XIL_AXI_TIMER_CSR_AUTO_RELOAD_MASK,
 				tp->base_addr + XIL_AXI_TIMER_TCSR_OFFSET);
 
-	// Start Timer bz setting enable signal
+	// Start Timer by setting enable signal
 	data = ioread32(tp->base_addr + XIL_AXI_TIMER_TCSR_OFFSET);
 	iowrite32(data | XIL_AXI_TIMER_CSR_ENABLE_TMR_MASK,
 				tp->base_addr + XIL_AXI_TIMER_TCSR_OFFSET);
-
 }
 
 //***************************************************
@@ -275,26 +274,35 @@ int timer_close(struct inode *pinode, struct file *pfile)
 
 ssize_t timer_read(struct file *pfile, char __user *buffer, size_t length, loff_t *offset) 
 {
-	int ret;
-	
-	char temp_buff[BUFF_SIZE] = {0};
+	char output[BUFF_SIZE] = {0};
+	static int end_read = 0;
+	int ret = 0;
 	int len = 0;
-	
+	unsigned int temp_time = 0;
+	unsigned int ms = 0;
+	unsigned int s  = 0;
+	unsigned int m  = 0;
+	unsigned int h  = 0;
+
 	// cat fifo_module will try to read from file as long as the return value is not 0 so we return 0 (OK) after reading once.
-	if (end_read)
+	if (end_read = 1)
 	{
 		end_read = 0;
 		return OK;
 	}
 	
-	// Pretvoriti `time` u h, m, s, ms 
-	unsigned int h  = 0;
-	unsigned int m  = 0;
-	unsigned int s  = 0;
-	unsigned int ms = 0;
+	// Pretvoriti `time` u h, m, s, ms
+	temp_time = time_ms;
+	ms = temp_time % 1000;
+	temp_time = (unsigned int)(temp_time / 1000);
+	s = temp_time % 60;
+	temp_time = (unsigned int)(temp_time / 60);
+	m = temp_time % 60;
+	h = (unsigned int)(temp_time / 60);
+
 	// Format: hh:mm:ss.ms:us
-	len = sprintf(temp_buff, "TIMER: %d:%d:%d:%d\n", h, m, s, ms);
-	ret = copy_to_user(buffer, temp_buff, len);
+	len = sprintf(output, "%d:%d:%d:%d\n", h, m, s, ms);
+	ret = copy_to_user(buffer, output, len);
 		
 	if(ret) return -EFAULT;
 	
@@ -313,6 +321,8 @@ ssize_t timer_write(struct file *pfile, const char __user *buffer, size_t length
 	//			   ako je  to moguce
 	
 	char input[BUFF_SIZE] = {0};
+	int data = 0;
+	int timer0_enabled = 0;
 	int ret = 0;
 	
 	ret = copy_from_user(input, buffer, length);
@@ -321,21 +331,41 @@ ssize_t timer_write(struct file *pfile, const char __user *buffer, size_t length
 	}
 	input[length] = '\0';
 
-	ret = strcmp(input, "toggle");
-	if (ret == 0) {
+	if (strcmp(input, "toggle") == 0) {
 		// start/pauza
+		data = ioread32(tp->base_addr + XIL_AXI_TIMER_TCSR_OFFSET);
+		timer0_enabled = data & XIL_AXI_TIMER_CSR_ENABLE_TMR_MASK;
+		
+		if (timer0_enabled == 0) {
+			// Start Timer by setting enable signal
+			iowrite32(data | XIL_AXI_TIMER_CSR_ENABLE_TMR_MASK,
+						tp->base_addr + XIL_AXI_TIMER_TCSR_OFFSET);
+		}
+		else {
+			// Stop Timer by clearing enable signal
+			iowrite32(data & ~(XIL_AXI_TIMER_CSR_ENABLE_TMR_MASK),
+						tp->base_addr + XIL_AXI_TIMER_TCSR_OFFSET);
+		}
 	}
-	ret = strcmp(input, "inc");
-	if (ret == 0) {
+	else if (strcmp(input, "inc") == 0) {
 		// +10s
+		time_ms = time_ms + TEN_SEC_IN_MS;
 	}
-	ret = strcmp(input, "dec");
-	if (ret == 0) {
+	else if (strcmp(input, "dec") == 0) {
 		// -10s ako je moguce
+		if (time_ms >= TEN_SEC_IN_MS)
+		{
+			time_ms = time_ms - TEN_SEC_IN_MS;
+		}
+		else
+		{
+			printk(KERN_WARNING "xilaxitimer_write: Time can't be negative.");
+		}
 	}
-	
-	if (ret != 0) printk(KERN_WARNING "Wrong command. Use toggle, inc or dec.");
-	
+	else {
+		printk(KERN_WARNING "xilaxitimer_write: Wrong command. Use toggle, inc or dec.");
+	}
+		
 	return length;
 }
 
