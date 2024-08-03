@@ -1,0 +1,9 @@
+Compatible polja uredjaja:
+
+BRAM A: "xlnx_bram_a"
+
+BRAM B: "xlnx_bram_b"
+
+BRAM C: "xlnx_bram_c"
+
+Mnozac matrica: "xlnx_matmul"
