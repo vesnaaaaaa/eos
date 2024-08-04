@@ -16,28 +16,28 @@
 #include <linux/of.h>//of_match_table
 #include <linux/ioport.h>//ioremap
 
-MODULE_AUTHOR ("FTN");
-MODULE_DESCRIPTION("Test Driver for VGA controller IP.");
+MODULE_AUTHOR ("EE187/2019");
+MODULE_DESCRIPTION("Driver for BRAM C IP.");
 MODULE_LICENSE("Dual BSD/GPL");
-MODULE_ALIAS("custom:vga controller");
+MODULE_ALIAS("custom:bram c");
 
-#define DEVICE_NAME "vga"
-#define DRIVER_NAME "vga_driver"
+#define DEVICE_NAME "bram_c"
+#define DRIVER_NAME "bram_c_driver"
 #define BUFF_SIZE 20
 
 
 //*******************FUNCTION PROTOTYPES************************************
-static int vga_probe(struct platform_device *pdev);
-static int vga_open(struct inode *i, struct file *f);
-static int vga_close(struct inode *i, struct file *f);
-static ssize_t vga_read(struct file *f, char __user *buf, size_t len, loff_t *off);
-static ssize_t vga_write(struct file *f, const char __user *buf, size_t length, loff_t *off);
-static int __init vga_init(void);
-static void __exit vga_exit(void);
-static int vga_remove(struct platform_device *pdev);
+static int bram_c_probe(struct platform_device *pdev);
+static int bram_c_open(struct inode *i, struct file *f);
+static int bram_c_close(struct inode *i, struct file *f);
+static ssize_t bram_c_read(struct file *f, char __user *buf, size_t len, loff_t *off);
+static ssize_t bram_c_write(struct file *f, const char __user *buf, size_t length, loff_t *off);
+static int __init bram_c_init(void);
+static void __exit bram_c_exit(void);
+static int bram_c_remove(struct platform_device *pdev);
 
 //*********************GLOBAL VARIABLES*************************************
-struct vga_info {
+struct bram_c_info {
   unsigned long mem_start;
   unsigned long mem_end;
   void __iomem *base_addr;
@@ -48,37 +48,37 @@ static dev_t my_dev_id;
 static struct class *my_class;
 static struct device *my_device;
 static int int_cnt;
-static struct vga_info *vp = NULL;
+static struct bram_c_info *vp = NULL;
 
 static struct file_operations my_fops =
   {
     .owner = THIS_MODULE,
-    .open = vga_open,
-    .release = vga_close,
-    .read = vga_read,
-    .write = vga_write
+    .open = bram_c_open,
+    .release = bram_c_close,
+    .read = bram_c_read,
+    .write = bram_c_write
   };
-static struct of_device_id vga_of_match[] = {
-  { .compatible = "vga_bram_ctrl", },
+static struct of_device_id bram_c_of_match[] = {
+  { .compatible = "xlnx_bram_c", },
   { /* end of list */ },
 };
 
-static struct platform_driver vga_driver = {
+static struct platform_driver bram_c_driver = {
   .driver = {
     .name = DRIVER_NAME,
     .owner = THIS_MODULE,
-    .of_match_table	= vga_of_match,
+    .of_match_table	= bram_c_of_match,
   },
-  .probe		= vga_probe,
-  .remove	= vga_remove,
+  .probe		= bram_c_probe,
+  .remove	= bram_c_remove,
 };
 
-MODULE_DEVICE_TABLE(of, vga_of_match);
+MODULE_DEVICE_TABLE(of, bram_c_of_match);
 
 
 //***************************************************************************
 // PROBE AND REMOVE
-static int vga_probe(struct platform_device *pdev)
+static int bram_c_probe(struct platform_device *pdev)
 {
   struct resource *r_mem;
   int rc = 0;
@@ -88,23 +88,23 @@ static int vga_probe(struct platform_device *pdev)
   // Get phisical register adress space from device tree
   r_mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
   if (!r_mem) {
-    printk(KERN_ALERT "vga_probe: Failed to get reg resource\n");
+    printk(KERN_ALERT "bram_c_probe: Failed to get reg resource\n");
     return -ENODEV;
   }
-  // Get memory for structure vga_info
-  vp = (struct vga_info *) kmalloc(sizeof(struct vga_info), GFP_KERNEL);
+  // Get memory for structure bram_c_info
+  vp = (struct bram_c_info *) kmalloc(sizeof(struct bram_c_info), GFP_KERNEL);
   if (!vp) {
-    printk(KERN_ALERT "vga_probe: Could not allocate memory for structure vga_info\n");
+    printk(KERN_ALERT "bram_c_probe: Could not allocate memory for structure bram_c_info\n");
     return -ENOMEM;
   }
-  // Put phisical adresses in vga_info structure
+  // Put phisical adresses in bram_c_info structure
   vp->mem_start = r_mem->start;
   vp->mem_end = r_mem->end;
     
   // Reserve that memory space for this driver
   if (!request_mem_region(vp->mem_start,vp->mem_end - vp->mem_start + 1, DRIVER_NAME))
   {
-    printk(KERN_ALERT "vga_probe: Could not lock memory region at %p\n",(void *)vp->mem_start);
+    printk(KERN_ALERT "bram_c_probe: Could not lock memory region at %p\n",(void *)vp->mem_start);
     rc = -EBUSY;
     goto error1;
   }    
@@ -112,12 +112,12 @@ static int vga_probe(struct platform_device *pdev)
 
   vp->base_addr = ioremap(vp->mem_start, vp->mem_end - vp->mem_start + 1);
   if (!vp->base_addr) {
-    printk(KERN_ALERT "vga_probe: Could not allocate memory\n");
+    printk(KERN_ALERT "bram_c_probe: Could not allocate memory\n");
     rc = -EIO;
     goto error2;
   }
 
-  printk(KERN_NOTICE "vga_probe: VGA platform driver registered\n");
+  printk(KERN_NOTICE "bram_c_probe: bram_c platform driver registered\n");
   return 0;//ALL OK
  error2:
   release_mem_region(vp->mem_start, vp->mem_end - vp->mem_start + 1);
@@ -126,7 +126,7 @@ static int vga_probe(struct platform_device *pdev)
 
 }
 
-static int vga_remove(struct platform_device *pdev)
+static int bram_c_remove(struct platform_device *pdev)
 {
   int i = 0;
   // Exit Device Module
@@ -134,74 +134,66 @@ static int vga_remove(struct platform_device *pdev)
   { 
     iowrite32(0, vp->base_addr + i*4); 
   } 
-  printk(KERN_INFO "VGA_remove: Vga remove in process");
+  printk(KERN_INFO "bram_c_remove: bram_c remove in process");
   iounmap(vp->base_addr);
   release_mem_region(vp->mem_start, vp->mem_end - vp->mem_start + 1);
   kfree(vp);
-  printk(KERN_INFO "VGA_remove: Vga driver removed");
+  printk(KERN_INFO "bram_c_remove: bram_c driver removed");
   return 0;
 }
 
 //***************************************************
 // IMPLEMENTATION OF FILE OPERATION FUNCTIONS
-static int vga_open(struct inode *i, struct file *f)
+static int bram_c_open(struct inode *i, struct file *f)
 {
-  //printk(KERN_INFO "vga opened\n");
+  //printk(KERN_INFO "bram_c opened\n");
   return 0;
 }
 
-static int vga_close(struct inode *i, struct file *f)
+static int bram_c_close(struct inode *i, struct file *f)
 {
-  //printk(KERN_INFO "vga closed\n");
+  //printk(KERN_INFO "bram_c closed\n");
   return 0;
 }
 
-static ssize_t vga_read(struct file *f, char __user *buf, size_t len, loff_t *off)
+static ssize_t bram_c_read(struct file *f, char __user *buf, size_t len, loff_t *off)
 {
-  //printk("vga read\n");
-  return 0;
+    // Citamo rezultat mnozenja matrica (A i B) iz BRAM memorije
+	int ret;
+	int len = 0;
+	u32 bram_c_val = 0;
+	char buff[BUFF_SIZE];
+	if (endRead){
+		endRead = 0;
+		return 0;
+	}
+
+	bram_c_val = ioread32(vp->base_addr);
+
+/* 	buff[0]= '0';
+	buff[1]= 'b';
+	for(i=0;i<4;i++)
+	{
+		if((bram_c_val >> i) & 0x01)
+			buff[5-i] = '1';
+		else
+			buff[5-i] = '0';
+	}
+	buff[6]= '\n'; */
+	len=7;
+	ret = copy_to_user(buffer, buff, len);
+	if(ret)
+		return -EFAULT;
+	//printk(KERN_INFO "Succesfully read\n");
+	endRead = 1;
+
+	return len;
 }
 
-static ssize_t vga_write(struct file *f, const char __user *buf, size_t length, loff_t *off)
-{	
-  char buff[BUFF_SIZE];
-  int ret = 0;
-  unsigned int xpos=0,ypos=0;
-  unsigned long long rgb=0;
-  unsigned char rgb_buff[10];  
-  ret = copy_from_user(buff, buf, length);  
-  if(ret){
-    printk("copy from user failed \n");
-    return -EFAULT;
-  }  
-  buff[length] = '\0';
-  
-  
-  sscanf(buff,"%d,%d,%s", &xpos, &ypos, rgb_buff);  
-  ret = kstrtoull(rgb_buff, 0, &rgb);
- 
-  if(ret != -EINVAL)//checking for parsing error
-  {
-    if (xpos > 255)
-    {
-      printk(KERN_WARNING "VGA_write: X_axis position exceeded, maximum is 255 and minimum 0 \n");
-    }
-    else if (ypos > 143)
-    {
-      printk(KERN_WARNING "VGA_write: Y_axis position exceeded, maximum is 143 and minimum 0 \n");
-    }
-    else
-    {
-      iowrite32(rgb, vp->base_addr + (256*ypos + xpos)*4);
-    }
-  }
-  else
-  {
-    printk(KERN_WARNING "VGA_write: Wrong write format, expected \"xpos,ypos,rgb\"\n");
-    // return -EINVAL;//parsing error
-  }        
-  return length;
-
+static ssize_t bram_c_write(struct file *f, const char __user *buf, size_t length, loff_t *off)
+{
+  //printk("bram_c write\n");
+  return 0;
 }
 
 //***************************************************
@@ -211,34 +203,33 @@ static ssize_t vga_write(struct file *f, const char __user *buf, size_t length, 
 //***************************************************
 // INIT AND EXIT FUNCTIONS OF THE DRIVER
 
-static int __init vga_init(void)
+static int __init bram_c_init(void)
 {
-
   int ret = 0;
   int_cnt = 0;
 
-  printk(KERN_INFO "vga_init: Initialize Module \"%s\"\n", DEVICE_NAME);
-  ret = alloc_chrdev_region(&my_dev_id, 0, 1, "VGA_region");
+  printk(KERN_INFO "bram_c_init: Initialize Module \"%s\"\n", DEVICE_NAME);
+  ret = alloc_chrdev_region(&my_dev_id, 0, 1, "bram_c_region");
   if (ret)
   {
-    printk(KERN_ALERT "vga_init: Failed CHRDEV!.\n");
+    printk(KERN_ALERT "bram_c_init: Failed CHRDEV!.\n");
     return -1;
   }
-  printk(KERN_INFO "vga_init: Successful allocation of CHRDEV!\n");
-  my_class = class_create(THIS_MODULE, "VGA_drv");
+  printk(KERN_INFO "bram_c_init: Successful allocation of CHRDEV!\n");
+  my_class = class_create(THIS_MODULE, "bram_c_drv");
   if (my_class == NULL)
   {
-    printk(KERN_ALERT "vga_init: Failed class create!.\n");
+    printk(KERN_ALERT "bram_c_init: Failed class create!.\n");
     goto fail_0;
   }
-  printk(KERN_INFO "vga_init: Successful class chardev create!.\n");
-  my_device = device_create(my_class, NULL, MKDEV(MAJOR(my_dev_id),0), NULL, "vga");
+  printk(KERN_INFO "bram_c_init: Successful class chardev create!.\n");
+  my_device = device_create(my_class, NULL, MKDEV(MAJOR(my_dev_id),0), NULL, "bram_c");
   if (my_device == NULL)
   {
     goto fail_1;
   }
 
-  printk(KERN_INFO "vga_init: Device created.\n");
+  printk(KERN_INFO "bram_c_init: Device created.\n");
 
   my_cdev = cdev_alloc();	
   my_cdev->ops = &my_fops;
@@ -246,12 +237,12 @@ static int __init vga_init(void)
   ret = cdev_add(my_cdev, my_dev_id, 1);
   if (ret)
   {
-    printk(KERN_ERR "VGA_init: Failed to add cdev\n");
+    printk(KERN_ERR "bram_c_init: Failed to add cdev\n");
     goto fail_2;
   }
-  printk(KERN_INFO "VGA_init: Init Device \"%s\".\n");
+  printk(KERN_INFO "bram_c_init: Init Device \"%s\".\n");
 
-  return platform_driver_register(&vga_driver);
+  return platform_driver_register(&bram_c_driver);
 
  fail_2:
   device_destroy(my_class, MKDEV(MAJOR(my_dev_id),0));
@@ -263,17 +254,17 @@ static int __init vga_init(void)
 
 } 
 
-static void __exit vga_exit(void)  		
+static void __exit bram_c_exit(void)  		
 {
 
-  platform_driver_unregister(&vga_driver);
+  platform_driver_unregister(&bram_c_driver);
   cdev_del(my_cdev);
   device_destroy(my_class, MKDEV(MAJOR(my_dev_id),0));
   class_destroy(my_class);
   unregister_chrdev_region(my_dev_id, 1);
-  printk(KERN_INFO "vga_exit: Exit Device Module \"%s\".\n", DEVICE_NAME);
+  printk(KERN_INFO "bram_c_exit: Exit Device Module \"%s\".\n", DEVICE_NAME);
 }
 
-module_init(vga_init);
-module_exit(vga_exit);
+module_init(bram_c_init);
+module_exit(bram_c_exit);
 
