@@ -16,6 +16,8 @@
 #include <linux/of.h>//of_match_table
 #include <linux/ioport.h>//ioremap
 
+#include "bram_common.h"
+
 MODULE_AUTHOR ("EE187/2019");
 MODULE_DESCRIPTION("Driver for BRAM C IP.");
 MODULE_LICENSE("Dual BSD/GPL");

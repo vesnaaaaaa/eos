@@ -25,7 +25,6 @@ MODULE_ALIAS("custom:matrix multiplication");
 #define DRIVER_NAME "matmul_driver"
 #define BUFF_SIZE 20
 
-
 //*******************FUNCTION PROTOTYPES************************************
 static int matmul_probe(struct platform_device *pdev);
 static int matmul_open(struct inode *i, struct file *f);
