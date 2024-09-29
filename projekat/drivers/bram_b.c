@@ -166,41 +166,64 @@ static ssize_t bram_b_read(struct file *f, char __user *buf, size_t len, loff_t 
 
 static ssize_t bram_b_write(struct file *f, const char __user *buf, size_t length, loff_t *off)
 {
-	// Pisemo matricu B u BRAM memoriju
 	char buff[BUFF_SIZE];
-	int ret = 0;	
+	int ret = 0;
 	ret = copy_from_user(buff, buf, length);
 	
 	if(ret){
 		printk("copy from user failed \n");
 		return -EFAULT;
-	}	
-	buff[length] = '\0';
+	}
 	
-	// sscanf(buff,"%d,%d,%s", &xpos, &ypos, rgb_buff);	
-/*	 
-	if(ret != -EINVAL)//checking for parsing error
-	{
-		if (xpos > 255)
-		{
-			printk(KERN_WARNING "bram_b_write: X_axis position exceeded, maximum is 255 and minimum 0 \n");
+	int first_row_length = 0;
+	int current_row_length = 0;
+	int current_number = 0;
+	int mat_element_count = 0;
+	
+	for(int i=0; i < length-1; i++) {
+		char e = buff[i];
+		
+		if(e == ',' || e == ';'){
+			if(current_number > 4095){
+				printk(KERN_ERR "Svi elementi matrice moraju biti brojevi izmedju 0 i 4095.\n");
+				return -EFAULT;
+			}
+			else {
+				int offset = mat_element_count*4;
+				iowrite32(current_number, vp->base_addr + offset);
+				
+				current_number = 0;
+				mat_element_count = mat_element_count+1;
+				current_row_length = current_row_length+1;
+			}
+			
+			if (e == ';'){
+				if(first_row_length == 0){
+					first_row_length = current_row_length;
+				}
+				else{
+					if(current_row_length != first_row_length){
+						printk(KERN_ERR "Format matrice je neispravan.\n");
+						return -EFAULT;
+					}
+				}
+				
+				current_row_length = 0;
+			}
 		}
-		else if (ypos > 143)
-		{
-			printk(KERN_WARNING "bram_b_write: Y_axis position exceeded, maximum is 143 and minimum 0 \n");
-		}
-		else
-		{
-			iowrite32(rgb, vp->base_addr + (256*ypos + xpos)*4);
+		else{
+			if(e >= '0' && <= '9'){
+				int current_digit = e - '0';
+				current_number = current_number*10 + current_digit;
+			}
+			else {
+				printk(KERN_ERR "Svi elementi matrice moraju biti brojevi izmedju 0 i 4095!\n");
+				return -EFAULT;
+			}
 		}
 	}
-	else
-	{
-		printk(KERN_WARNING "bram_b_write: Wrong write format, expected \"xpos,ypos,rgb\"\n");
-		// return -EINVAL;//parsing error
-	}				
- */	return length;
-
+	
+	return length;
 }
 
 //***************************************************

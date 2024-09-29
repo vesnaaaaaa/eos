@@ -223,6 +223,7 @@ static ssize_t bram_a_write(struct file *f, const char __user *buf, size_t lengt
 			}
 		}
 	}
+	
 	return length;
 }
 
