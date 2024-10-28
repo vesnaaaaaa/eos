@@ -23,7 +23,8 @@ MODULE_ALIAS("custom:matrix multiplication");
 
 #define DEVICE_NAME "matmul"
 #define DRIVER_NAME "matmul_driver"
-#define BUFF_SIZE 20
+
+#define BUFF_SIZE 128
 
 //*******************FUNCTION PROTOTYPES************************************
 static int matmul_probe(struct platform_device *pdev);
@@ -157,35 +158,35 @@ static int matmul_close(struct inode *i, struct file *f)
 
 static ssize_t matmul_read(struct file *f, char __user *buf, size_t len, loff_t *off)
 {		
-	// Citamo vrednosti registara ready, start, n, m, p u formatu
-	// ready=?;start=?;n=?;m=?;p=?
-	// gde ? predstavlja trenutnu vrednost
+	static int endRead = 0;
 	int ret;
-	int len = 0;
-	u32 matmul_val = 0;
-	char buff[BUFF_SIZE];
+	int len;
+	
+	unsigned int ready = 0;
+	unsigned int start = 0;
+	unsigned int n = 0;
+	unsigned int m = 0;
+	unsigned int p = 0;
+	
+	char buff[MATMUL_READ_LEN];
+	
 	if (endRead){
 		endRead = 0;
 		return 0;
 	}
 
-	matmul_val = ioread32(vp->base_addr);
+	ready = ioread32(vp->base_addr);
+	start = ioread32(vp->base_addr+4);
+	n = ioread32(vp->base_addr+8);
+	m = ioread32(vp->base_addr+12);
+	p = ioread32(vp->base_addr+16);
 
-/* 	buff[0]= '0';
-	buff[1]= 'b';
-	for(i=0;i<4;i++)
-	{
-		if((matmul_val >> i) & 0x01)
-			buff[5-i] = '1';
-		else
-			buff[5-i] = '0';
-	}
-	buff[6]= '\n'; */
-	len=7;
-	ret = copy_to_user(buffer, buff, len);
+	len = sprintf(buff, "ready=%d;start=%d;n=%d;m=%d;p=%d\n", ready,start,n,m,p);
+	
+	ret = copy_to_user(buf, buff, len);
 	if(ret)
 		return -EFAULT;
-	//printk(KERN_INFO "Succesfully read\n");
+	
 	endRead = 1;
 
 	return len;
@@ -201,9 +202,10 @@ static ssize_t matmul_write(struct file *f, const char __user *buf, size_t lengt
 	//		c) start=trigger
 	char buff[BUFF_SIZE];
 	int ret = 0;
-	unsigned int xpos=0,ypos=0;
-	unsigned long long rgb=0;
-	unsigned char rgb_buff[10];	
+	int p1 = 0;
+	int p2 = 0;
+	int p3 = 0;
+	
 	ret = copy_from_user(buff, buf, length);	
 	if(ret){
 		printk("copy from user failed \n");
@@ -211,32 +213,20 @@ static ssize_t matmul_write(struct file *f, const char __user *buf, size_t lengt
 	}	
 	buff[length] = '\0';
 	
+	ret = sscanf(buff, "dim=%d,%d,%d", &p1, &p2, &p3);	
+	if (ret == 3) {
 	
-	sscanf(buff,"%d,%d,%s", &xpos, &ypos, rgb_buff);	
-	ret = kstrtoull(rgb_buff, 0, &rgb);
- 
-	if(ret != -EINVAL)//checking for parsing error
-	{
-		if (xpos > 255)
-		{
-			printk(KERN_WARNING "matmul_write: X_axis position exceeded, maximum is 255 and minimum 0 \n");
-		}
-		else if (ypos > 143)
-		{
-			printk(KERN_WARNING "matmul_write: Y_axis position exceeded, maximum is 143 and minimum 0 \n");
-		}
-		else
-		{
-			iowrite32(rgb, vp->base_addr + (256*ypos + xpos)*4);
-		}
 	}
-	else
-	{
-		printk(KERN_WARNING "matmul_write: Wrong write format, expected \"xpos,ypos,rgb\"\n");
-		// return -EINVAL;//parsing error
-	}				
-	return length;
-
+	ret = sscanf(buff, "start=%d", &p1);	
+	if (ret == 1) {
+	
+	}
+ 
+	
+	printk(KERN_ERR "Wrong write format, expected:\n");
+	printk(KERN_ERR "    1) dim=n,m,p\n");
+	printk(KERN_ERR "    2) start=0 or start=1\n");
+	return -EINVAL; //parsing error
 }
 
 //***************************************************

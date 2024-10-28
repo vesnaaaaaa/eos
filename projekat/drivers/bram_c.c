@@ -160,7 +160,7 @@ static int bram_c_close(struct inode *i, struct file *f)
 
 static ssize_t bram_c_read(struct file *f, char __user *buf, size_t len, loff_t *off)
 {
-		// Citamo rezultat mnozenja matrica (A i B) iz BRAM memorije
+	// Citamo rezultat mnozenja matrica (A i B) iz BRAM memorije
 	int ret;
 	int len = 0;
 	u32 bram_c_val = 0;
@@ -183,7 +183,7 @@ static ssize_t bram_c_read(struct file *f, char __user *buf, size_t len, loff_t 
 	}
 	buff[6]= '\n'; */
 	len=7;
-	ret = copy_to_user(buffer, buff, len);
+	ret = copy_to_user(buf, buff, len);
 	if(ret)
 		return -EFAULT;
 	//printk(KERN_INFO "Succesfully read\n");
