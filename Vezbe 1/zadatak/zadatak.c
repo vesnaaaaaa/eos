@@ -8,7 +8,7 @@ void main(){
 	
 	zbir= x+y;
 	
-	printf("Zbir je jednak broju : \n");
+	printf("Zbir je jednak broju: %d \n", zbir);
 	
 	
 }
