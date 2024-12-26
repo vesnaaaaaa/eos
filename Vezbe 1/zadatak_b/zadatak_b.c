@@ -15,7 +15,7 @@ int div(int x, int y){
 }
 
 void div_print(int rezultat){
-		if(x == -24){
+		if(rezultat == -24){
 			
 			
 			printf("Deljenje sa nulom nije dozvoljeno! \n");
