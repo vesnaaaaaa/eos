@@ -14,7 +14,9 @@ void main(){
 	{
 		
 		rezultat= x/y;
-		printf("Rezultat je jednak broju: %d /n");
+		printf("Rezultat je jednak broju: %d /n", rezultat);
+		
+		;
 	}
 	
 	
