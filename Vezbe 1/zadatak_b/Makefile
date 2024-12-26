@@ -1,9 +1,9 @@
-all: zadatak
-build: zadatak.c
+all: zadatak_b
+build: zadatak_b.c
 	gcc -c zadatak.c
-link: zadatak.o
-	gcc -o zadatak zadatak.o
+link: zadatak_b.o
+	gcc -o zadatak_b zadatak_b.o
 clean: 
-	rm zadatak.o zadatak
-run: zadatak
-	./zadatak
+	rm zadatak_b.o zadatak_b
+run: zadatak_b
+	./zadatak_b
