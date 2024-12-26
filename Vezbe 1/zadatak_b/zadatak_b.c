@@ -1,25 +1,41 @@
 #include <stdio.h>
 
-int x=10;
-int y=2;
+int x;
+int y;
 int rezultat;
+
+
+int div(int x, int y){
+	if(y==0){
+		return -24;
+}else
+{
+	return x/y;
+}
+}
+
+void div_print(int rezultat){
+		if(x == -24){
+			
+			
+			printf("Deljenje sa nulom nije dozvoljeno! \n");
+		
+		}
+		else
+			{
+			printf("Rezultat deljenja je: %d \n", rezultat);
+		}
+}
 
 void main(){
 	
-	if(y==0){
+	
+	int rezultat1 = div(21,7);
+	
+	int rezultat2 = div(5,0);
+
+	div_print(rezultat1);
+	div_print(rezultat2);
 		
-		printf("Nije dozvoljeno deljenje sa nulom! \n", y);	
-	}
-	else
-	{
-		
-		rezultat= x/y;
-		printf("Rezultat je jednak broju: %d \n", rezultat);
-		
-	
-	}
-	
-	
-	
 	
 }
