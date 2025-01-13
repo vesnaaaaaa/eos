@@ -1,9 +1,15 @@
-all: bram_a
-build: bram_a.c
-	gcc -c bram_a.c
-link: bram_a.o
-	gcc -o bram_a bram_a.o
-clean: 
-	rm bram_a.o bram_a
-run: bram_a
-	./bram_a
+# If KERNELRELEASE is defined, we've been invoked from the
+# kernel build system and can use its language.
+ifneq ($(KERNELRELEASE),)
+	obj-m := bram_a.o 
+# Otherwise we were called directly from the command
+# line; invoke the kernel build system.
+else
+	KERNELDIR ?= /lib/modules/$(shell uname -r)/build
+	PWD := $(shell pwd)
+default:
+	$(MAKE) -C $(KERNELDIR) M=$(PWD) modules
+endif
+clean:
+	$(MAKE) -C $(KERNELDIR) M=$(PWD) clean
+
