@@ -1,7 +1,7 @@
 # If KERNELRELEASE is defined, we've been invoked from the
 # kernel build system and can use its language.
 ifneq ($(KERNELRELEASE),)
-	obj-m := matmul.o 
+	obj-m := matmul.o
 # Otherwise we were called directly from the command
 # line; invoke the kernel build system.
 else
@@ -12,5 +12,3 @@ default:
 endif
 clean:
 	$(MAKE) -C $(KERNELDIR) M=$(PWD) clean
-
-
