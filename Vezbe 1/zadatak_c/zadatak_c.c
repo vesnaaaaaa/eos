@@ -7,7 +7,7 @@
 
 // str je string  char-> je adresa u memoriji tipa char 
 
-//char* je niz u c
+//char* je niz u c -> adresa u memoriji tipa char
 
 
 // strrev() funkcija sluzi da se obrne dati string 

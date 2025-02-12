@@ -329,13 +329,13 @@ static int matmul_probe(struct platform_device* pdev)
     int device_index;
 
     // Determine which device we're probing based on compatible string
-    if (device_match_fwnode(pdev->dev.fwnode, &matmul_of_match[0]))
+    if (device_match_fwnode(&pdev->dev, &matmul_of_match[0]))
         device_index = 0; // BRAM A
-    else if (device_match_fwnode(pdev->dev.fwnode, &matmul_of_match[1]))
+    else if (device_match_fwnode(&pdev->dev, &matmul_of_match[1]))
         device_index = 1; // BRAM B
-    else if (device_match_fwnodenode(pdev->dev.fwnode, &matmul_of_match[2]))
+    else if (device_match_fwnode(&pdev->dev, &matchl_of_match[2))
         device_index = 2; // BRAM C
-    else if (device_match_fwnodenode(pdev->dev.fwnode, &matmul_of_match[3]))
+    else if (device_match_fwnode(&pdev->dev, &matmul_of_match[3))
         device_index = 3; // MatMul
     else
         return -ENODEV;
@@ -385,13 +385,13 @@ static int matmul_remove(struct platform_device* pdev)
     int device_index;
 
     // Determine which device we're removing
-    if (of_device_match_node(pdev->dev.of_node, &matmul_of_match[0]))
+    if (device_match_fwnode(&pdev->dev, &matmul_of_match[0]))
         device_index = 0;
-    else if (of_device_match_node(pdev->dev.of_node, &matmul_of_match[1]))
+    else if (device_match_fwnode(&pdev->dev, &matmul_of_match[1]))
         device_index = 1;
-    else if (of_device_match_node(pdev->dev.of_node, &matmul_of_match[2]))
+else if (device_match_fwnode(&pdev->dev, &matmul_of_match[2]))
         device_index = 2;
-    else if (of_device_match_node(pdev->dev.of_node, &matmul_of_match[3]))
+    else if (device_match_fwnode(&pdev->dev, &matmul_of_match[3]))
         device_index = 3;
     else
         return -ENODEV;
@@ -466,7 +466,11 @@ static int __init matmul_init(void)
         }
 
         // Initialize the character device
-        struct file_operations fops;
+		int matmul_init(void) {
+		int ret;
+		struct file_operations fops = {};  // Inicijalizuj praznu strukturu
+       
+		
         if (i == 0) {
             fops = bram_a_fops;
         } else if (i == 1) {

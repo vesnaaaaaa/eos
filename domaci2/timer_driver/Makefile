@@ -1,7 +1,7 @@
 # If KERNELRELEASE is defined, we've been invoked from
 # kernel build system and can use its language.
 ifneq ($(KERNELRELEASE),)
-	obj-m := timer_driver.o
+	obj-m := timer_.o
 # Otherwise we were called directly from the command
 # line; invoke the kernel build system.
 else
