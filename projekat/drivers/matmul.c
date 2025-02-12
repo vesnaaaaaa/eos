@@ -1,4 +1,4 @@
-#include "bram_common.h"
+
 #include <linux/cdev.h>
 #include <linux/device.h>
 #include <linux/errno.h>
@@ -112,16 +112,19 @@ static ssize_t bram_a_write(struct file* f, const char __user* buf, size_t lengt
     int ret = 0;
     struct device_info* dev_info = &devices[0]; // BRAM A is device 0
 
+
+	int first_row_length = 0;
+    int current_row_length = 0;
+    int current_number = 0;
+    int mat_element_count = 0;
+
     ret = copy_from_user(buff, buf, length);
+	
     if (ret) {
         printk("copy from user failed \n");
         return -EFAULT;
     }
 
-    int first_row_length = 0;
-    int current_row_length = 0;
-    int current_number = 0;
-    int mat_element_count = 0;
 
     for (int i = 0; i < length - 1; i++) {
         char e = buff[i];
@@ -171,16 +174,18 @@ static ssize_t bram_b_write(struct file* f, const char __user* buf, size_t lengt
     int ret = 0;
     struct device_info* dev_info = &devices[1]; // BRAM B is device 1
 
+	int first_row_length = 0;
+    int current_row_length = 0;
+    int current_number = 0;
+    int mat_element_count = 0;
+
     ret = copy_from_user(buff, buf, length);
     if (ret) {
         printk("copy from user failed \n");
         return -EFAULT;
     }
 
-    int first_row_length = 0;
-    int current_row_length = 0;
-    int current_number = 0;
-    int mat_element_count = 0;
+   
 
     for (int i = 0; i < length - 1; i++) {
         char e = buff[i];
@@ -257,16 +262,17 @@ static ssize_t matmul_read(struct file* f, char __user* buf, size_t len, loff_t*
     struct device_info* dev_info = &devices[3]; // MatMul is device 3
     char buff[BUFF_SIZE];
 
+	unsigned int ready = ioread32(dev_info->base_addr);
+    unsigned int start = ioread32(dev_info->base_addr + 4);
+    unsigned int n = ioread32(dev_info->base_addr + 8);
+    unsigned int m = ioread32(dev_info->base_addr + 12);
+    unsigned int p = ioread32(dev_info->base_addr + 16);
+
     if (endRead == 1) {
         endRead = 0;
         return 0;
     }
 
-    unsigned int ready = ioread32(dev_info->base_addr);
-    unsigned int start = ioread32(dev_info->base_addr + 4);
-    unsigned int n = ioread32(dev_info->base_addr + 8);
-    unsigned int m = ioread32(dev_info->base_addr + 12);
-    unsigned int p = ioread32(dev_info->base_addr + 16);
 
     len = sprintf(buff, "ready=%d;start=%d;n=%d;m=%d;p=%d\n", ready, start, n, m, p);
     ret = copy_to_user(buf, buff, len);
@@ -319,17 +325,17 @@ static int matmul_probe(struct platform_device* pdev)
 {
     struct resource* r_mem;
     int rc = 0;
-    const char* device_name;
+    //const char* device_name;
     int device_index;
 
     // Determine which device we're probing based on compatible string
-    if (of_device_match_node(pdev->dev.of_node, &matmul_of_match[0]))
+    if (device_match_fwnode(pdev->dev.fwnode, &matmul_of_match[0]))
         device_index = 0; // BRAM A
-    else if (of_device_match_node(pdev->dev.of_node, &matmul_of_match[1]))
+    else if (device_match_fwnode(pdev->dev.fwnode, &matmul_of_match[1]))
         device_index = 1; // BRAM B
-    else if (of_device_match_node(pdev->dev.of_node, &matmul_of_match[2]))
+    else if (device_match_fwnodenode(pdev->dev.fwnode, &matmul_of_match[2]))
         device_index = 2; // BRAM C
-    else if (of_device_match_node(pdev->dev.of_node, &matmul_of_match[3]))
+    else if (device_match_fwnodenode(pdev->dev.fwnode, &matmul_of_match[3]))
         device_index = 3; // MatMul
     else
         return -ENODEV;
@@ -460,7 +466,7 @@ static int __init matmul_init(void)
         }
 
         // Initialize the character device
-        struct struct file_operations fops;
+        struct file_operations fops;
         if (i == 0) {
             fops = bram_a_fops;
         } else if (i == 1) {
@@ -471,8 +477,8 @@ static int __init matmul_init(void)
             fops = matmul_fops;
         }
 
-        cdev_init(&devices[i].cdev,
-        devices[i].cdev.owner = THIS_MODULE;
+		cdev_init(&devices[i].cdev, &fops);
+        devices[i].cdev.owner = THIS_MODULE; 
 
         // Add the character device to the system
         ret = cdev_add(&devices[i].cdev, devices[i].dev_id, 1);
