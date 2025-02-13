@@ -484,7 +484,7 @@ static int __init matmul_init(void)
         } else {
             fops = matmul_fops;
         }
-	}
+	
 
 		cdev_init(&devices[i].cdev, &fops);
         devices[i].cdev.owner = THIS_MODULE; 
@@ -543,7 +543,8 @@ fail_chrdev:
     return ret;
 }
 
-	void exit matmul_exit(void)
+	
+	void matmul_exit(void);
 {
     // Unregister platform driver
     platform_driver_unregister(&matmul_driver);
