@@ -333,9 +333,9 @@ static int matmul_probe(struct platform_device* pdev)
         device_index = 0; // BRAM A
     else if (device_match_fwnode(&pdev->dev, &matmul_of_match[1]))
         device_index = 1; // BRAM B
-    else if (device_match_fwnode(&pdev->dev, &matchl_of_match[2))
+    else if (device_match_fwnode(&pdev->dev, &matmul_of_match[2]))
         device_index = 2; // BRAM C
-    else if (device_match_fwnode(&pdev->dev, &matmul_of_match[3))
+    else if (device_match_fwnode(&pdev->dev, &matmul_of_match[3]))
         device_index = 3; // MatMul
     else
         return -ENODEV;
@@ -466,11 +466,15 @@ static int __init matmul_init(void)
         }
 
         // Initialize the character device
-		int matmul_init(void) {
-		int ret;
-		struct file_operations fops = {};  // Inicijalizuj praznu strukturu
-       
 		
+		int matmul_init(void) {
+			
+		int ret;
+		struct file_operations fops = {};		//inicijalizuje se prazna struktura
+		int i;
+		
+		
+		for (i = 0; i < NUM_DEVICES; i++) {
         if (i == 0) {
             fops = bram_a_fops;
         } else if (i == 1) {
@@ -480,6 +484,7 @@ static int __init matmul_init(void)
         } else {
             fops = matmul_fops;
         }
+	}
 
 		cdev_init(&devices[i].cdev, &fops);
         devices[i].cdev.owner = THIS_MODULE; 
@@ -488,11 +493,26 @@ static int __init matmul_init(void)
         ret = cdev_add(&devices[i].cdev, devices[i].dev_id, 1);
         if (ret) {
             printk(KERN_ALERT "Failed to add char device %d\n", i);
-            goto fail_cdev;
+            goto fail_cdev_init;
         }
+		
     }
+	
+	return 0;
+	
+	fail_cdev_init:
+    // Čišćenje u slučaju greške
+    for (int j = 0; j < i; j++) {
+        cdev_del(&devices[j].cdev);
+    }
+    return ret;
+}
 
     // Register platform driver
+	
+	int matmul_driver_init(void) {
+    int ret;
+	
     ret = platform_driver_register(&matmul_driver);
     if (ret) {
         printk(KERN_ALERT "Failed to register platform driver\n");
@@ -523,7 +543,7 @@ fail_chrdev:
     return ret;
 }
 
-static void __exit matmul_exit(void)
+	void exit matmul_exit(void)
 {
     // Unregister platform driver
     platform_driver_unregister(&matmul_driver);
