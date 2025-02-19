@@ -1,4 +1,3 @@
-
 #include <linux/cdev.h>
 #include <linux/device.h>
 #include <linux/errno.h>
@@ -43,6 +42,13 @@ struct device_info {
 static struct class* matmul_class;
 static struct device_info* devices;
 static dev_t first_dev_id;
+
+static int device_open(struct inode* i, struct file* f);
+static int device_close(struct inode* i, struct file* f);
+// static int matmul_remove(struct platform_device* pdev);
+static int matmul_probe(struct platform_device* pdev);
+static int __init matmul_init(void);
+static void __exit matmul_exit(void);
 
 // Function prototypes for each device type
 static ssize_t bram_a_write(struct file* f, const char __user* buf, size_t length, loff_t* off);
@@ -112,19 +118,16 @@ static ssize_t bram_a_write(struct file* f, const char __user* buf, size_t lengt
     int ret = 0;
     struct device_info* dev_info = &devices[0]; // BRAM A is device 0
 
-
-	int first_row_length = 0;
-    int current_row_length = 0;
-    int current_number = 0;
-    int mat_element_count = 0;
-
     ret = copy_from_user(buff, buf, length);
-	
     if (ret) {
         printk("copy from user failed \n");
         return -EFAULT;
     }
 
+    int first_row_length = 0;
+    int current_row_length = 0;
+    int current_number = 0;
+    int mat_element_count = 0;
 
     for (int i = 0; i < length - 1; i++) {
         char e = buff[i];
@@ -174,18 +177,16 @@ static ssize_t bram_b_write(struct file* f, const char __user* buf, size_t lengt
     int ret = 0;
     struct device_info* dev_info = &devices[1]; // BRAM B is device 1
 
-	int first_row_length = 0;
-    int current_row_length = 0;
-    int current_number = 0;
-    int mat_element_count = 0;
-
     ret = copy_from_user(buff, buf, length);
     if (ret) {
         printk("copy from user failed \n");
         return -EFAULT;
     }
 
-   
+    int first_row_length = 0;
+    int current_row_length = 0;
+    int current_number = 0;
+    int mat_element_count = 0;
 
     for (int i = 0; i < length - 1; i++) {
         char e = buff[i];
@@ -262,17 +263,16 @@ static ssize_t matmul_read(struct file* f, char __user* buf, size_t len, loff_t*
     struct device_info* dev_info = &devices[3]; // MatMul is device 3
     char buff[BUFF_SIZE];
 
-	unsigned int ready = ioread32(dev_info->base_addr);
-    unsigned int start = ioread32(dev_info->base_addr + 4);
-    unsigned int n = ioread32(dev_info->base_addr + 8);
-    unsigned int m = ioread32(dev_info->base_addr + 12);
-    unsigned int p = ioread32(dev_info->base_addr + 16);
-
     if (endRead == 1) {
         endRead = 0;
         return 0;
     }
 
+    unsigned int ready = ioread32(dev_info->base_addr);
+    unsigned int start = ioread32(dev_info->base_addr + 4);
+    unsigned int n = ioread32(dev_info->base_addr + 8);
+    unsigned int m = ioread32(dev_info->base_addr + 12);
+    unsigned int p = ioread32(dev_info->base_addr + 16);
 
     len = sprintf(buff, "ready=%d;start=%d;n=%d;m=%d;p=%d\n", ready, start, n, m, p);
     ret = copy_to_user(buf, buff, len);
@@ -325,7 +325,6 @@ static int matmul_probe(struct platform_device* pdev)
 {
     struct resource* r_mem;
     int rc = 0;
-    //const char* device_name;
     int device_index;
 
     // Determine which device we're probing based on compatible string
@@ -380,7 +379,7 @@ error1:
     return rc;
 }
 
-static int matmul_remove(struct platform_device* pdev)
+static void matmul_remove(struct platform_device* pdev)
 {
     int device_index;
 
@@ -389,12 +388,13 @@ static int matmul_remove(struct platform_device* pdev)
         device_index = 0;
     else if (device_match_fwnode(&pdev->dev, &matmul_of_match[1]))
         device_index = 1;
-else if (device_match_fwnode(&pdev->dev, &matmul_of_match[2]))
+    else if (device_match_fwnode(&pdev->dev, &matmul_of_match[2]))
         device_index = 2;
     else if (device_match_fwnode(&pdev->dev, &matmul_of_match[3]))
         device_index = 3;
     else
-        return -ENODEV;
+        // return -ENODEV;
+        return ;
 
     // Clear memory
     for (int i = 0; i < (256 * 144); i++) {
@@ -406,7 +406,8 @@ else if (device_match_fwnode(&pdev->dev, &matmul_of_match[2]))
         devices[device_index].mem_end - devices[device_index].mem_start + 1);
 
     printk(KERN_INFO "Device %d driver removed\n", device_index);
-    return 0;
+    // return 0;
+    return;
 }
 
 static struct platform_driver matmul_driver = {
@@ -445,7 +446,7 @@ static int __init matmul_init(void)
     }
 
     // Create device class
-    matmul_class = class_create(THIS_MODULE, "matmul_class");
+    matmul_class = class_create("matmul_class");
     if (IS_ERR(matmul_class)) {
         printk(KERN_ALERT "Failed to create device class\n");
         ret = PTR_ERR(matmul_class);
@@ -466,15 +467,7 @@ static int __init matmul_init(void)
         }
 
         // Initialize the character device
-		
-		int matmul_init(void) {
-			
-		int ret;
-		struct file_operations fops = {};		//inicijalizuje se prazna struktura
-		int i;
-		
-		
-		for (i = 0; i < NUM_DEVICES; i++) {
+        struct file_operations fops;
         if (i == 0) {
             fops = bram_a_fops;
         } else if (i == 1) {
@@ -484,35 +477,19 @@ static int __init matmul_init(void)
         } else {
             fops = matmul_fops;
         }
-	
 
-		cdev_init(&devices[i].cdev, &fops);
-        devices[i].cdev.owner = THIS_MODULE; 
+        cdev_init(&devices[i].cdev, &fops);
+        devices[i].cdev.owner = THIS_MODULE;
 
         // Add the character device to the system
         ret = cdev_add(&devices[i].cdev, devices[i].dev_id, 1);
         if (ret) {
             printk(KERN_ALERT "Failed to add char device %d\n", i);
-            goto fail_cdev_init;
+            goto fail_cdev;
         }
-		
     }
-	
-	return 0;
-	
-	fail_cdev_init:
-    // Čišćenje u slučaju greške
-    for (int j = 0; j < i; j++) {
-        cdev_del(&devices[j].cdev);
-    }
-    return ret;
-}
 
     // Register platform driver
-	
-	int matmul_driver_init(void) {
-    int ret;
-	
     ret = platform_driver_register(&matmul_driver);
     if (ret) {
         printk(KERN_ALERT "Failed to register platform driver\n");
@@ -543,8 +520,7 @@ fail_chrdev:
     return ret;
 }
 
-	
-	void matmul_exit(void);
+static void __exit matmul_exit(void)
 {
     // Unregister platform driver
     platform_driver_unregister(&matmul_driver);
