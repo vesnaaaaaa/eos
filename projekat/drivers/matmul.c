@@ -45,7 +45,7 @@ static dev_t first_dev_id;
 
 static int device_open(struct inode* i, struct file* f);
 static int device_close(struct inode* i, struct file* f);
-// static int matmul_remove(struct platform_device* pdev);
+static int matmul_remove(struct platform_device* pdev);
 static int matmul_probe(struct platform_device* pdev);
 static int __init matmul_init(void);
 static void __exit matmul_exit(void);
@@ -379,7 +379,7 @@ error1:
     return rc;
 }
 
-static void matmul_remove(struct platform_device* pdev)
+static int matmul_remove(struct platform_device* pdev)
 {
     int device_index;
 
@@ -393,8 +393,9 @@ static void matmul_remove(struct platform_device* pdev)
     else if (device_match_fwnode(&pdev->dev, &matmul_of_match[3]))
         device_index = 3;
     else
-        // return -ENODEV;
-        return ;
+        
+	return -ENODEV;
+       
 
     // Clear memory
     for (int i = 0; i < (256 * 144); i++) {
@@ -406,8 +407,9 @@ static void matmul_remove(struct platform_device* pdev)
         devices[device_index].mem_end - devices[device_index].mem_start + 1);
 
     printk(KERN_INFO "Device %d driver removed\n", device_index);
-    // return 0;
-    return;
+    
+	return 0;
+   
 }
 
 static struct platform_driver matmul_driver = {
@@ -446,7 +448,8 @@ static int __init matmul_init(void)
     }
 
     // Create device class
-    matmul_class = class_create("matmul_class");
+    matmul_class = class_create(THIS_MODULE, "matmul_class"); 
+	
     if (IS_ERR(matmul_class)) {
         printk(KERN_ALERT "Failed to create device class\n");
         ret = PTR_ERR(matmul_class);
