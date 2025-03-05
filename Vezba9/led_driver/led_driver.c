@@ -3,6 +3,7 @@
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/fs.h>
+#include <linux/of.h>
 #include <linux/types.h>
 #include <linux/cdev.h>
 #include <linux/kdev_t.h>
