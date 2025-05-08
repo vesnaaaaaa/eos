@@ -320,6 +320,8 @@ static ssize_t matmul_write(struct file* f, const char __user* buf, size_t lengt
     return -EINVAL;
 }
 
+
+
 // Probe function
 static int matmul_probe(struct platform_device* pdev)
 {
@@ -440,12 +442,22 @@ static int __init matmul_init(void)
     devices[2].name = "bram_c";
     devices[3].name = "matmul";
 
+
+   // Register platform driver
+    ret = platform_driver_register(&matmul_driver);
+    if (ret) {
+        printk(KERN_ALERT "Failed to register platform driver\n");
+        goto fail_platform;
+    }
+	
+	
     // Allocate device numbers
     ret = alloc_chrdev_region(&first_dev_id, 0, NUM_DEVICES, "matmul_region");
     if (ret) {
         printk(KERN_ALERT "Failed to allocate char device region\n");
         goto fail_chrdev;
     }
+
 
     // Create device class
     matmul_class = class_create(THIS_MODULE, "matmul_class"); 
@@ -492,12 +504,6 @@ static int __init matmul_init(void)
         }
     }
 
-    // Register platform driver
-    ret = platform_driver_register(&matmul_driver);
-    if (ret) {
-        printk(KERN_ALERT "Failed to register platform driver\n");
-        goto fail_platform;
-    }
 
     printk(KERN_INFO "Matrix multiplication driver initialized\n");
     return 0;
