@@ -26,13 +26,13 @@ MODULE_ALIAS("custom:matmul");
 
 #define BUFF_SIZE 128
 #define BRAM_LINE_SIZE 7
-#define BRAM_SIZE (BRAM_LINE_SIZE * BRAM_LINE_SIZE)
+#define MATMUL_REG_SIZE_BYTES 20
+#define BRAM_SIZE_BYTES (4 * BRAM_LINE_SIZE * BRAM_LINE_SIZE)
 
-// TODO: Write real device offsets
 #define MATMUL_ADDR_OFFSET 0
-#define BRAM_A_ADDR_OFFSET 0
-#define BRAM_B_ADDR_OFFSET 0
-#define BRAM_C_ADDR_OFFSET 0
+#define BRAM_A_ADDR_OFFSET (MATMUL_ADDR_OFFSET + MATMUL_REG_SIZE_BYTES)
+#define BRAM_B_ADDR_OFFSET (BRAM_A_ADDR_OFFSET + BRAM_SIZE_BYTES)
+#define BRAM_C_ADDR_OFFSET (BRAM_B_ADDR_OFFSET + BRAM_SIZE_BYTES)
 
 enum Device {
   MATMUL = 0,
@@ -48,6 +48,12 @@ struct matmul_info {
   void __iomem *base_addr;
 };
 
+struct matrix_dims {
+    int m;
+    int p;
+    int ready;
+};
+
 // Global variables
 static struct class *matmul_class;
 static struct device *matmul_device;
@@ -55,9 +61,11 @@ static struct cdev *matmul_cdev;
 static struct matmul_info *dev_info;
 static dev_t first_dev_id;
 
+static struct matrix_dims mat_dims;
+
 static int device_open(struct inode *i, struct file *f);
 static int device_close(struct inode *i, struct file *f);
-static void matmul_remove(struct platform_device *pdev);
+static int matmul_remove(struct platform_device *pdev);
 static int matmul_probe(struct platform_device *pdev);
 static int __init matmul_init(void);
 static void __exit matmul_exit(void);
@@ -111,6 +119,18 @@ static ssize_t bram_a_write(const char __user *buf, size_t length) {
         printk(KERN_ERR "All matrix elements must be between 0 and 4095.\n");
         return -EFAULT;
       } else {
+	if (first_row_length > 0) {
+	    int current_col = mat_element_count / first_row_length + 1;
+	    if (current_col > BRAM_LINE_SIZE) {
+		printk(KERN_ERR "Matrix dimensions too large (maximum allowed size 7x7).\n");
+		return -EFAULT;
+	    }
+	}
+	if (current_row_length >= BRAM_LINE_SIZE) {
+            printk(KERN_ERR "Matrix dimensions too large (maximum allowed size 7x7).\n");
+            return -EFAULT;
+	}
+
         int offset = mat_element_count * 4;
         iowrite32(current_number, bram_a_base_addr + offset);
 
@@ -170,6 +190,18 @@ static ssize_t bram_b_write(const char __user *buf, size_t length) {
         printk(KERN_ERR "All matrix elements must be between 0 and 4095.\n");
         return -EFAULT;
       } else {
+	if (first_row_length > 0) {
+	    int current_col = mat_element_count / first_row_length + 1;
+	    if (current_col > BRAM_LINE_SIZE) {
+		printk(KERN_ERR "Matrix dimensions too large (maximum allowed size 7x7).\n");
+		return -EFAULT;
+	    }
+	}
+	if (current_row_length >= BRAM_LINE_SIZE) {
+            printk(KERN_ERR "Matrix dimensions too large (maximum allowed size 7x7).\n");
+            return -EFAULT;
+	}
+
         int offset = mat_element_count * 4;
         iowrite32(current_number, bram_b_base_addr + offset);
 
@@ -208,6 +240,11 @@ static ssize_t bram_b_write(const char __user *buf, size_t length) {
 static ssize_t bram_c_read(char __user *buf, size_t len) {
   static int endRead = 0;
   int ret;
+  int row;
+  int col;
+  int bram_pos;
+  int mat_pos;
+  char c;
   char buff[BUFF_SIZE];
   void __iomem *bram_c_base_addr = dev_info->base_addr + BRAM_C_ADDR_OFFSET;
 
@@ -216,10 +253,31 @@ static ssize_t bram_c_read(char __user *buf, size_t len) {
     return 0;
   }
 
-  for (int i = 0; i < 49; i++) {
-    buff[i] = ioread32(bram_c_base_addr + i * 4) + '0';
+  if (mat_dims.ready == 1) {
+      mat_pos = 0;
+      for (row = 0; row < mat_dims.m; row++) {
+	  for (col = 0; col < mat_dims.p; col++) {
+              bram_pos = row * mat_dims.m + col;
+              c = ((char)ioread32(bram_c_base_addr + bram_pos * 4)) + '0';
+	      buff[mat_pos] = c;
+	      mat_pos += 1;
+	      if (col == (mat_dims.p - 1)) {
+		  buff[mat_pos] = ';';
+	      } else {
+		  buff[mat_pos] = ',';
+	      }
+	      mat_pos += 1;
+	  }
+      }
+      buff[mat_pos + 1] = '\n';
+      buff[mat_pos + 2] = '\0';
+  } else {
+      for (int i = 0; i < 49; i++) {
+          buff[i] = ((char)ioread32(bram_c_base_addr + i * 4)) + '0';
+      }
+      buff[50] = '\n';
+      buff[51] = '\0';
   }
-  buff[50] = '\0';
 
   len = 64;
   ret = copy_to_user(buf, buff, len);
@@ -262,9 +320,9 @@ static ssize_t matmul_write_(const char __user *buf, size_t length) {
   void __iomem *matmul_base_addr = dev_info->base_addr + MATMUL_ADDR_OFFSET;
   char buff[BUFF_SIZE];
   int ret = 0;
-  int p1 = 0;
-  int p2 = 0;
-  int p3 = 0;
+  int m_ = 0;
+  int n_ = 0;
+  int p_ = 0;
 
   ret = copy_from_user(buff, buf, length);
   if (ret) {
@@ -273,17 +331,20 @@ static ssize_t matmul_write_(const char __user *buf, size_t length) {
   }
   buff[length] = '\0';
 
-  ret = sscanf(buff, "dim=%d,%d,%d", &p1, &p2, &p3);
+  ret = sscanf(buff, "dim=%d,%d,%d", &m_, &n_, &p_);
   if (ret == 3) {
-    iowrite32(p1, matmul_base_addr + 8);
-    iowrite32(p2, matmul_base_addr + 12);
-    iowrite32(p3, matmul_base_addr + 16);
+    iowrite32(m_, matmul_base_addr + 8);
+    iowrite32(n_, matmul_base_addr + 12);
+    iowrite32(p_, matmul_base_addr + 16);
+    mat_dims.m = m_;
+    mat_dims.p = p_;
+    mat_dims.ready = 1;
     return length;
   }
 
-  ret = sscanf(buff, "start=%d", &p1);
+  ret = sscanf(buff, "start=%d", &m_);
   if (ret == 1) {
-    iowrite32(p1, matmul_base_addr + 4);
+    iowrite32(m_, matmul_base_addr + 4);
     return length;
   }
 
@@ -392,18 +453,20 @@ static int matmul_probe(struct platform_device *pdev) {
 error2:
   release_mem_region(dev_info->mem_start,
                      dev_info->mem_end - dev_info->mem_start + 1);
+  kfree(dev_info);
 error1:
   return ret;
 }
 
-static void matmul_remove(struct platform_device *pdev) {
+static int matmul_remove(struct platform_device *pdev) {
   // Free resources taken in probe
-  iowrite32(0, dev_info->base_addr);
   iounmap(dev_info->base_addr);
   release_mem_region(dev_info->mem_start,
                      dev_info->mem_end - dev_info->mem_start + 1);
   kfree(dev_info);
   printk(KERN_WARNING "matmul_remove: Matmul driver removed\n");
+
+  return 0;
 }
 
 static struct platform_driver matmul_driver = {
@@ -432,7 +495,7 @@ static int __init matmul_init(void) {
   printk(KERN_INFO "matmul_init: Dev region allocated\n");
 
   // Create device class
-  matmul_class = class_create("matmul_class");
+  matmul_class = class_create(THIS_MODULE, "matmul_class");
 
   if (matmul_class == NULL) {
     printk(KERN_ALERT "Failed to create device class\n");
