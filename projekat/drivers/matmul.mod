@@ -1,2 +1,1 @@
-/home/vesna/Desktop/eos/projekat/drivers/matmul.o
-
+/root/docs/eos/projekat/drivers/matmul.o
