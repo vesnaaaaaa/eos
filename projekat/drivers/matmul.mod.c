@@ -30,9 +30,9 @@ MODULE_INFO(retpoline, "Y");
 static const struct modversion_info ____versions[]
 __used __section("__versions") = {
 	{ 0xefd6cf06, "__aeabi_unwind_cpp_pr0" },
-	{ 0x92997ed8, "_printk" },
 	{ 0x5f754e5a, "memset" },
 	{ 0xe3ec2f2b, "alloc_chrdev_region" },
+	{ 0x92997ed8, "_printk" },
 	{ 0x3ea1b6e4, "__stack_chk_fail" },
 	{ 0xbb94430, "__class_create" },
 	{ 0x6091b333, "unregister_chrdev_region" },
@@ -53,8 +53,13 @@ __used __section("__versions") = {
 	{ 0xae9849dd, "__request_region" },
 	{ 0xe97c4103, "ioremap" },
 	{ 0x56e838a0, "kmalloc_caches" },
+	{ 0xae353d77, "arm_copy_from_user" },
+	{ 0xbcab6ee6, "sscanf" },
+	{ 0x822137e2, "arm_heavy_mb" },
 	{ 0x7d3f43d5, "platform_driver_unregister" },
 	{ 0x4bcbe5aa, "cdev_del" },
+	{ 0x3c3ff9fd, "sprintf" },
+	{ 0x51a910c0, "arm_copy_to_user" },
 	{ 0x69d6813f, "module_layout" },
 };
 

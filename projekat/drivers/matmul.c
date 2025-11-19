@@ -29,6 +29,7 @@ MODULE_ALIAS("custom:matmul");
 #define MATMUL_REG_SIZE_BYTES 20
 #define BRAM_SIZE_BYTES (4 * BRAM_LINE_SIZE * BRAM_LINE_SIZE)
 
+// Device minor numbers.
 enum Device {
   MATMUL = 0,
   BRAM_A = 1,
@@ -38,8 +39,11 @@ enum Device {
 
 // Structure to hold device-specific info
 struct dev_info {
+  // Start address of physical memory for this device
   unsigned long mem_start;
+  // End address of phyiscal memory for this device
   unsigned long mem_end;
+  // Base address of virtual memory region mapped to physical
   void __iomem *base_addr;
 };
 
@@ -333,95 +337,91 @@ static ssize_t bram_c_read(char __user *buf, size_t len) {
 }
 
 static ssize_t matmul_read_(char __user *buf, size_t len) {
-  return 0;
-  // static int endRead = 0;
-  // int ret;
-  // char buff[BUFF_SIZE];
-  // void __iomem *matmul_base_addr = dev_info->base_addr + MATMUL_ADDR_OFFSET;
+  static int endRead = 0;
+  int ret;
+  char buff[BUFF_SIZE];
+  void __iomem *matmul_base_addr = matmul_dev_info->base_addr;
 
-  // if (endRead == 1) {
-  //   endRead = 0;
-  //   return 0;
-  // }
+  if (endRead == 1) {
+    endRead = 0;
+    return 0;
+  }
 
-  // unsigned int ready = ioread32(matmul_base_addr);
-  // unsigned int start = ioread32(matmul_base_addr + 4);
-  // unsigned int n = ioread32(matmul_base_addr + 8);
-  // unsigned int m = ioread32(matmul_base_addr + 12);
-  // unsigned int p = ioread32(matmul_base_addr + 16);
+  unsigned int ready = ioread32(matmul_base_addr);
+  unsigned int start = ioread32(matmul_base_addr + 4);
+  unsigned int n = ioread32(matmul_base_addr + 8);
+  unsigned int m = ioread32(matmul_base_addr + 12);
+  unsigned int p = ioread32(matmul_base_addr + 16);
 
-  // len = sprintf(buff, "ready=%d;start=%d;n=%d;m=%d;p=%d\n", ready, start, n, m,
-  //               p);
-  // ret = copy_to_user(buf, buff, len);
+  len = sprintf(buff, "ready=%d;start=%d;n=%d;m=%d;p=%d\n", ready, start, n, m,
+                p);
+  ret = copy_to_user(buf, buff, len);
 
-  // if (ret)
-  //   return -EFAULT;
+  if (ret)
+    return -EFAULT;
 
-  // endRead = 1;
-  // return len;
+  endRead = 1;
+  return len;
 }
 
 static ssize_t matmul_write_(const char __user *buf, size_t length) {
-  return 0;
+  void __iomem *matmul_base_addr = matmul_dev_info->base_addr;
+  char buff[BUFF_SIZE];
+  int ret = 0;
+  int m_ = 0;
+  int n_ = 0;
+  int p_ = 0;
   
-//   void __iomem *matmul_base_addr = dev_info->base_addr + MATMUL_ADDR_OFFSET;
-//   char buff[BUFF_SIZE];
-//   int ret = 0;
-//   int m_ = 0;
-//   int n_ = 0;
-//   int p_ = 0;
-// 
-//   ret = copy_from_user(buff, buf, length);
-//   if (ret) {
-//     printk("copy from user failed \n");
-//     return -EFAULT;
-//   }
-//   buff[length] = '\0';
-// 
-//   ret = sscanf(buff, "dim=%d,%d,%d", &m_, &n_, &p_);
-//   if (ret == 3) {
-//     iowrite32(m_, matmul_base_addr + 8);
-//     iowrite32(n_, matmul_base_addr + 12);
-//     iowrite32(p_, matmul_base_addr + 16);
-//     mat_dims.m = m_;
-//     mat_dims.p = p_;
-//     mat_dims.ready = 1;
-//     return length;
-//   }
-// 
-//   ret = sscanf(buff, "start=%d", &m_);
-//   if (ret == 1) {
-//     iowrite32(m_, matmul_base_addr + 4);
-//     return length;
-//   }
-// 
-//   printk(KERN_ERR "Wrong write format, expected:\n");
-//   printk(KERN_ERR "    1) dim=n,m,p\n");
-//   printk(KERN_ERR "    2) start=0 or start=1\n");
-//   return -EINVAL;
+  ret = copy_from_user(buff, buf, length);
+  if (ret) {
+    printk("copy from user failed \n");
+    return -EFAULT;
+  }
+  buff[length] = '\0';
+  
+  ret = sscanf(buff, "dim=%d,%d,%d", &m_, &n_, &p_);
+  if (ret == 3) {
+    iowrite32(m_, matmul_base_addr + 8);
+    iowrite32(n_, matmul_base_addr + 12);
+    iowrite32(p_, matmul_base_addr + 16);
+    mat_dims.m = m_;
+    mat_dims.p = p_;
+    mat_dims.ready = 1;
+    return length;
+  }
+
+  ret = sscanf(buff, "start=%d", &m_);
+  if (ret == 1) {
+    iowrite32(m_, matmul_base_addr + 4);
+    return length;
+  }
+
+  printk(KERN_ERR "Wrong write format, expected:\n");
+  printk(KERN_ERR "    1) dim=n,m,p\n");
+  printk(KERN_ERR "    2) start=0 or start=1\n");
+  return -EINVAL;
 }
 
 // Implementation of driver level operations
 static ssize_t matmul_read(struct file *f, char __user *buf, size_t len,
                            loff_t *off) {
-  return 0;
   ssize_t ret;
   dev_t current_dev_num = f->f_inode->i_rdev;
   int minor = MINOR(current_dev_num);
 
-  // switch (minor) {
-  // case MATMUL:
-  //   ret = matmul_read_(buf, len);
-  //   break;
-  // case BRAM_C:
-  //   ret = bram_c_read(buf, len);
-  //   break;
-  // default:
-  //   printk(KERN_ERR
-  //          "Attempted read operation on device that does not support it.\n");
-  //   ret = -EFAULT;
-  //   break;
-  // }
+  switch (minor) {
+  case MATMUL:
+    ret = matmul_read_(buf, len);
+    break;
+  case BRAM_C:
+    ret = bram_c_read(buf, len);
+    break;
+  default:
+    printk(KERN_ERR
+           "Attempted read operation on device that does not support it.\n");
+    ret = -EFAULT;
+    break;
+  }
 
   return ret;
 }
@@ -466,7 +466,7 @@ static int bram_a_dev_probe(struct platform_device *pdev) {
   // Allocate memory for dev_info structure
   bram_a_dev_info = (struct dev_info *)kmalloc(sizeof(struct dev_info), GFP_KERNEL);
   if (bram_a_dev_info == NULL) {
-    printk(KERN_ALERT "bram_a_dev_probe: Could not allocate matmul device\n");
+    printk(KERN_ALERT "bram_a_dev_probe: Could not allocate memory\n");
     return -ENOMEM;
   }
 
@@ -488,12 +488,12 @@ static int bram_a_dev_probe(struct platform_device *pdev) {
   bram_a_dev_info->base_addr =
       ioremap(bram_a_dev_info->mem_start, bram_a_dev_info->mem_end - bram_a_dev_info->mem_start + 1);
   if (!bram_a_dev_info->base_addr) {
-    printk(KERN_ALERT "bram_a_dev_probe: Could not allocate memory\n");
+    printk(KERN_ALERT "bram_a_dev_probe: Could remap memory\n");
     ret = -EIO;
     goto error2;
   }
 
-  printk(KERN_NOTICE "bram_a_dev_probe: Matmul platform driver registered\n");
+  printk(KERN_NOTICE "bram_a_dev_probe: Bram A device registered\n");
   return 0;
 
 error2:
@@ -518,7 +518,7 @@ static int bram_b_dev_probe(struct platform_device *pdev) {
   // Get memory for structure matmul_info
   bram_b_dev_info = (struct dev_info *)kmalloc(sizeof(struct dev_info), GFP_KERNEL);
   if (bram_b_dev_info == NULL) {
-    printk(KERN_ALERT "bram_b_dev_probe: Could not allocate matmul device\n");
+    printk(KERN_ALERT "bram_b_dev_probe: Could not allocate memory\n");
     return -ENOMEM;
   }
 
@@ -540,12 +540,12 @@ static int bram_b_dev_probe(struct platform_device *pdev) {
   bram_b_dev_info->base_addr =
       ioremap(bram_b_dev_info->mem_start, bram_b_dev_info->mem_end - bram_b_dev_info->mem_start + 1);
   if (!bram_b_dev_info->base_addr) {
-    printk(KERN_ALERT "bram_b_dev_probe: Could not allocate memory\n");
+    printk(KERN_ALERT "bram_b_dev_probe: Could not remap memory\n");
     ret = -EIO;
     goto error2;
   }
 
-  printk(KERN_NOTICE "bram_b_dev_probe: Matmul platform driver registered\n");
+  printk(KERN_NOTICE "bram_b_dev_probe: Bram B device registered\n");
   return 0;
 
 error2:
@@ -570,7 +570,7 @@ static int bram_c_dev_probe(struct platform_device *pdev) {
   // Get memory for structure matmul_info
   bram_c_dev_info = (struct dev_info *)kmalloc(sizeof(struct dev_info), GFP_KERNEL);
   if (bram_c_dev_info == NULL) {
-    printk(KERN_ALERT "bram_c_dev_probe: Could not allocate matmul device\n");
+    printk(KERN_ALERT "bram_c_dev_probe: Could not allocate memory\n");
     return -ENOMEM;
   }
 
@@ -592,12 +592,12 @@ static int bram_c_dev_probe(struct platform_device *pdev) {
   bram_c_dev_info->base_addr =
       ioremap(bram_c_dev_info->mem_start, bram_c_dev_info->mem_end - bram_c_dev_info->mem_start + 1);
   if (!bram_c_dev_info->base_addr) {
-    printk(KERN_ALERT "bram_c_dev_probe: Could not allocate memory\n");
+    printk(KERN_ALERT "bram_c_dev_probe: Could not remap memory\n");
     ret = -EIO;
     goto error2;
   }
 
-  printk(KERN_NOTICE "bram_c_dev_probe: Matmul platform driver registered\n");
+  printk(KERN_NOTICE "bram_c_dev_probe: Bram C device registered\n");
   return 0;
 
 error2:
@@ -622,7 +622,7 @@ static int matmul_dev_probe(struct platform_device *pdev) {
   // Get memory for structure matmul_info
   matmul_dev_info = (struct dev_info *)kmalloc(sizeof(struct dev_info), GFP_KERNEL);
   if (matmul_dev_info == NULL) {
-    printk(KERN_ALERT "matmul_dev_probe: Could not allocate matmul device\n");
+    printk(KERN_ALERT "matmul_dev_probe: Could not allocate memory\n");
     return -ENOMEM;
   }
 
@@ -644,12 +644,12 @@ static int matmul_dev_probe(struct platform_device *pdev) {
   matmul_dev_info->base_addr =
       ioremap(matmul_dev_info->mem_start, matmul_dev_info->mem_end - matmul_dev_info->mem_start + 1);
   if (!matmul_dev_info->base_addr) {
-    printk(KERN_ALERT "matmul_dev_probe: Could not allocate memory\n");
+    printk(KERN_ALERT "matmul_dev_probe: Could not remap memory\n");
     ret = -EIO;
     goto error2;
   }
 
-  printk(KERN_NOTICE "matmul_dev_probe: Matmul platform driver registered\n");
+  printk(KERN_NOTICE "matmul_dev_probe: Matmul device registered\n");
   return 0;
 
 error2:
@@ -680,7 +680,7 @@ static int matmul_probe(struct platform_device *pdev) {
   return ret;
 }
 
-static void bram_a_dev_remove() {
+static void bram_a_dev_remove(void) {
   // Free resources taken in probe
   iounmap(bram_a_dev_info->base_addr);
   release_mem_region(bram_a_dev_info->mem_start,
@@ -689,31 +689,31 @@ static void bram_a_dev_remove() {
   printk(KERN_WARNING "bram_a_dev_remove: Bram A device removed\n");
 }
 
-static void bram_b_dev_remove() {
+static void bram_b_dev_remove(void) {
   // Free resources taken in probe
   iounmap(bram_b_dev_info->base_addr);
   release_mem_region(bram_b_dev_info->mem_start,
                      bram_b_dev_info->mem_end - bram_b_dev_info->mem_start + 1);
   kfree(bram_b_dev_info);
-  printk(KERN_WARNING "bram_b_dev_remove: Bram A device removed\n");
+  printk(KERN_WARNING "bram_b_dev_remove: Bram B device removed\n");
 }
 
-static void bram_c_dev_remove() {
+static void bram_c_dev_remove(void) {
   // Free resources taken in probe
   iounmap(bram_c_dev_info->base_addr);
   release_mem_region(bram_c_dev_info->mem_start,
                      bram_c_dev_info->mem_end - bram_c_dev_info->mem_start + 1);
   kfree(bram_c_dev_info);
-  printk(KERN_WARNING "bram_c_dev_remove: Bram A device removed\n");
+  printk(KERN_WARNING "bram_c_dev_remove: Bram C device removed\n");
 }
 
-static void matmul_dev_remove() {
+static void matmul_dev_remove(void) {
   // Free resources taken in probe
   iounmap(matmul_dev_info->base_addr);
   release_mem_region(matmul_dev_info->mem_start,
                      matmul_dev_info->mem_end - matmul_dev_info->mem_start + 1);
   kfree(matmul_dev_info);
-  printk(KERN_WARNING "matmul_dev_remove: Bram A device removed\n");
+  printk(KERN_WARNING "matmul_dev_remove: Matmul device removed\n");
 }
 
 static int matmul_remove(struct platform_device *pdev) {
@@ -731,7 +731,6 @@ static int matmul_remove(struct platform_device *pdev) {
     return -ENODEV;
   }
 
-  printk(KERN_WARNING "matmul_remove: Matmul driver removed\n");
 
   return 0;
 }
