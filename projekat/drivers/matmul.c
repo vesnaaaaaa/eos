@@ -101,6 +101,40 @@ static struct of_device_id matmul_of_match[] = {
 };
 MODULE_DEVICE_TABLE(of, matmul_of_match);
 
+static struct dev_info* read_dev_address(enum Device dev) {
+    switch (dev) {
+      case BRAM_A:
+        return bram_a_dev_info;
+      case BRAM_B:
+        return bram_b_dev_info;
+      case BRAM_C:
+        return bram_c_dev_info;
+      case MATMUL:
+        return matmul_dev_info;
+      default:
+        return NULL;
+    }
+}
+
+static void write_dev_address(enum Device dev, struct dev_info* addr) {
+    switch (dev) {
+      case BRAM_A:
+        bram_a_dev_info = addr;
+        break;
+      case BRAM_B:
+        bram_b_dev_info = addr;
+        break;
+      case BRAM_C:
+        bram_c_dev_info = addr;
+        break;
+      case MATMUL:
+        matmul_dev_info = addr;
+        break;
+      default:
+        break;
+    }
+}
+
 // Implementation of device-specific operations
 static ssize_t bram_a_write(const char __user *buf, size_t length) {
   char buff[BUFF_SIZE];
@@ -418,101 +452,285 @@ static ssize_t matmul_write(struct file *f, const char __user *buf,
   return ret;
 }
 
-// Probe function
-static int matmul_probe(struct platform_device *pdev) {
+static int bram_a_dev_probe(struct platform_device *pdev) {
   struct resource *r_mem;
   int ret = 0;
-  
-  struct dev_info **d = NULL;
-
-  // Konstante izvucene iz device tree-a
-  if (strcmp(pdev->name, "40000000.axi_bram_ctrl") == 0) {
-     d = &bram_a_dev_info;
-  } else if (strcmp(pdev->name, "42000000.axi_bram_ctrl") == 0) {
-     d = &bram_b_dev_info;
-  } else if (strcmp(pdev->name, "44000000.axi_bram_ctrl") == 0) {
-     d = &bram_c_dev_info;
-  } else if (strcmp(pdev->name, "43c00000.matrix_multiplier") == 0) {
-     d = &matmul_dev_info;
-  } else {
-    printk(KERN_ALERT "matmul_probe: Unexpected platform device name: %s\n", pdev->name);
-    return -ENODEV;
-  }
-
-    printk(KERN_ALERT "matmul_probe: Device name: %s; addr: %p\n", pdev->name, *d);
 
   // Get physical register address space from device tree
   r_mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
   if (!r_mem) {
-    printk(KERN_ALERT "matmul_probe: Failed to get reg resource\n");
+    printk(KERN_ALERT "bram_a_dev_probe: Failed to get reg resource\n");
     return -ENODEV;
   }
-
-  // Get memory for structure matmul_info
-  *d = (struct dev_info *)kmalloc(sizeof(struct dev_info), GFP_KERNEL);
-  if (*d == NULL) {
-    printk(KERN_ALERT "matmul_probe: Could not allocate matmul device\n");
+  
+  // Allocate memory for dev_info structure
+  bram_a_dev_info = (struct dev_info *)kmalloc(sizeof(struct dev_info), GFP_KERNEL);
+  if (bram_a_dev_info == NULL) {
+    printk(KERN_ALERT "bram_a_dev_probe: Could not allocate matmul device\n");
     return -ENOMEM;
   }
 
-  // Put phisical adresses in matmul_info structure
-  (*d)->mem_start = r_mem->start;
-  (*d)->mem_end = r_mem->end;
+  // Put phisical adresses in dev_info structure
+  bram_a_dev_info->mem_start = r_mem->start;
+  bram_a_dev_info->mem_end = r_mem->end;
 
   // Reserve that memory space for this driver
-  if (!request_mem_region((*d)->mem_start,
-                          (*d)->mem_end - (*d)->mem_start + 1,
+  if (!request_mem_region(bram_a_dev_info->mem_start,
+                          bram_a_dev_info->mem_end - bram_a_dev_info->mem_start + 1,
                           DEVICE_NAME)) {
-    printk(KERN_ALERT "matmul_probe: Could not lock memory region at %p\n",
-           (void *)(*d)->mem_start);
+    printk(KERN_ALERT "bram_a_dev_probe: Could not lock memory region at %p\n",
+           (void *)bram_a_dev_info->mem_start);
     ret = -EBUSY;
     goto error1;
   }
 
   // Remap physical to virtual addresses
-  (*d)->base_addr =
-      ioremap((*d)->mem_start, (*d)->mem_end - (*d)->mem_start + 1);
-  if (!(*d)->base_addr) {
-    printk(KERN_ALERT "matmul_probe: Could not allocate memory\n");
+  bram_a_dev_info->base_addr =
+      ioremap(bram_a_dev_info->mem_start, bram_a_dev_info->mem_end - bram_a_dev_info->mem_start + 1);
+  if (!bram_a_dev_info->base_addr) {
+    printk(KERN_ALERT "bram_a_dev_probe: Could not allocate memory\n");
     ret = -EIO;
     goto error2;
   }
 
-  printk(KERN_NOTICE "matmul_probe: Matmul platform driver registered\n");
+  printk(KERN_NOTICE "bram_a_dev_probe: Matmul platform driver registered\n");
   return 0;
 
 error2:
-  release_mem_region((*d)->mem_start,
-                     (*d)->mem_end - (*d)->mem_start + 1);
-  kfree(*d);
+  release_mem_region(bram_a_dev_info->mem_start,
+                     bram_a_dev_info->mem_end - bram_a_dev_info->mem_start + 1);
+  kfree(bram_a_dev_info);
 error1:
   return ret;
 }
 
-static int matmul_remove(struct platform_device *pdev) {
-  struct dev_info **d = NULL;
+static int bram_b_dev_probe(struct platform_device *pdev) {
+  struct resource *r_mem;
+  int ret = 0;
 
+  // Get physical register address space from device tree
+  r_mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+  if (!r_mem) {
+    printk(KERN_ALERT "bram_b_dev_probe: Failed to get reg resource\n");
+    return -ENODEV;
+  }
+  
+  // Get memory for structure matmul_info
+  bram_b_dev_info = (struct dev_info *)kmalloc(sizeof(struct dev_info), GFP_KERNEL);
+  if (bram_b_dev_info == NULL) {
+    printk(KERN_ALERT "bram_b_dev_probe: Could not allocate matmul device\n");
+    return -ENOMEM;
+  }
+
+  // Put phisical adresses in matmul_info structure
+  bram_b_dev_info->mem_start = r_mem->start;
+  bram_b_dev_info->mem_end = r_mem->end;
+
+  // Reserve that memory space for this driver
+  if (!request_mem_region(bram_b_dev_info->mem_start,
+                          bram_b_dev_info->mem_end - bram_b_dev_info->mem_start + 1,
+                          DEVICE_NAME)) {
+    printk(KERN_ALERT "bram_b_dev_probe: Could not lock memory region at %p\n",
+           (void *)bram_b_dev_info->mem_start);
+    ret = -EBUSY;
+    goto error1;
+  }
+
+  // Remap physical to virtual addresses
+  bram_b_dev_info->base_addr =
+      ioremap(bram_b_dev_info->mem_start, bram_b_dev_info->mem_end - bram_b_dev_info->mem_start + 1);
+  if (!bram_b_dev_info->base_addr) {
+    printk(KERN_ALERT "bram_b_dev_probe: Could not allocate memory\n");
+    ret = -EIO;
+    goto error2;
+  }
+
+  printk(KERN_NOTICE "bram_b_dev_probe: Matmul platform driver registered\n");
+  return 0;
+
+error2:
+  release_mem_region(bram_b_dev_info->mem_start,
+                     bram_b_dev_info->mem_end - bram_b_dev_info->mem_start + 1);
+  kfree(bram_b_dev_info);
+error1:
+  return ret;
+}
+
+static int bram_c_dev_probe(struct platform_device *pdev) {
+  struct resource *r_mem;
+  int ret = 0;
+
+  // Get physical register address space from device tree
+  r_mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+  if (!r_mem) {
+    printk(KERN_ALERT "bram_c_dev_probe: Failed to get reg resource\n");
+    return -ENODEV;
+  }
+  
+  // Get memory for structure matmul_info
+  bram_c_dev_info = (struct dev_info *)kmalloc(sizeof(struct dev_info), GFP_KERNEL);
+  if (bram_c_dev_info == NULL) {
+    printk(KERN_ALERT "bram_c_dev_probe: Could not allocate matmul device\n");
+    return -ENOMEM;
+  }
+
+  // Put phisical adresses in matmul_info structure
+  bram_c_dev_info->mem_start = r_mem->start;
+  bram_c_dev_info->mem_end = r_mem->end;
+
+  // Reserve that memory space for this driver
+  if (!request_mem_region(bram_c_dev_info->mem_start,
+                          bram_c_dev_info->mem_end - bram_c_dev_info->mem_start + 1,
+                          DEVICE_NAME)) {
+    printk(KERN_ALERT "bram_c_dev_probe: Could not lock memory region at %p\n",
+           (void *)bram_c_dev_info->mem_start);
+    ret = -EBUSY;
+    goto error1;
+  }
+
+  // Remap physical to virtual addresses
+  bram_c_dev_info->base_addr =
+      ioremap(bram_c_dev_info->mem_start, bram_c_dev_info->mem_end - bram_c_dev_info->mem_start + 1);
+  if (!bram_c_dev_info->base_addr) {
+    printk(KERN_ALERT "bram_c_dev_probe: Could not allocate memory\n");
+    ret = -EIO;
+    goto error2;
+  }
+
+  printk(KERN_NOTICE "bram_c_dev_probe: Matmul platform driver registered\n");
+  return 0;
+
+error2:
+  release_mem_region(bram_c_dev_info->mem_start,
+                     bram_c_dev_info->mem_end - bram_c_dev_info->mem_start + 1);
+  kfree(bram_c_dev_info);
+error1:
+  return ret;
+}
+
+static int matmul_dev_probe(struct platform_device *pdev) {
+  struct resource *r_mem;
+  int ret = 0;
+
+  // Get physical register address space from device tree
+  r_mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+  if (!r_mem) {
+    printk(KERN_ALERT "matmul_dev_probe: Failed to get reg resource\n");
+    return -ENODEV;
+  }
+  
+  // Get memory for structure matmul_info
+  matmul_dev_info = (struct dev_info *)kmalloc(sizeof(struct dev_info), GFP_KERNEL);
+  if (matmul_dev_info == NULL) {
+    printk(KERN_ALERT "matmul_dev_probe: Could not allocate matmul device\n");
+    return -ENOMEM;
+  }
+
+  // Put phisical adresses in matmul_info structure
+  matmul_dev_info->mem_start = r_mem->start;
+  matmul_dev_info->mem_end = r_mem->end;
+
+  // Reserve that memory space for this driver
+  if (!request_mem_region(matmul_dev_info->mem_start,
+                          matmul_dev_info->mem_end - matmul_dev_info->mem_start + 1,
+                          DEVICE_NAME)) {
+    printk(KERN_ALERT "matmul_dev_probe: Could not lock memory region at %p\n",
+           (void *)matmul_dev_info->mem_start);
+    ret = -EBUSY;
+    goto error1;
+  }
+
+  // Remap physical to virtual addresses
+  matmul_dev_info->base_addr =
+      ioremap(matmul_dev_info->mem_start, matmul_dev_info->mem_end - matmul_dev_info->mem_start + 1);
+  if (!matmul_dev_info->base_addr) {
+    printk(KERN_ALERT "matmul_dev_probe: Could not allocate memory\n");
+    ret = -EIO;
+    goto error2;
+  }
+
+  printk(KERN_NOTICE "matmul_dev_probe: Matmul platform driver registered\n");
+  return 0;
+
+error2:
+  release_mem_region(matmul_dev_info->mem_start,
+                     matmul_dev_info->mem_end - matmul_dev_info->mem_start + 1);
+  kfree(matmul_dev_info);
+error1:
+  return ret;
+}
+
+static int matmul_probe(struct platform_device *pdev) {
+  int ret = 0;
+  
   // Konstante izvucene iz device tree-a
   if (strcmp(pdev->name, "40000000.axi_bram_ctrl") == 0) {
-     d = &bram_a_dev_info;
+    ret = bram_a_dev_probe(pdev);
   } else if (strcmp(pdev->name, "42000000.axi_bram_ctrl") == 0) {
-     d = &bram_b_dev_info;
+    ret = bram_b_dev_probe(pdev);
   } else if (strcmp(pdev->name, "44000000.axi_bram_ctrl") == 0) {
-     d = &bram_c_dev_info;
+    ret = bram_c_dev_probe(pdev);
   } else if (strcmp(pdev->name, "43c00000.matrix_multiplier") == 0) {
-     d = &matmul_dev_info;
+    ret = matmul_dev_probe(pdev);
+  } else {
+    printk(KERN_ALERT "matmul_probe: Unexpected platform device name: %s\n", pdev->name);
+    ret = -ENODEV;
+  }
+
+  return ret;
+}
+
+static void bram_a_dev_remove() {
+  // Free resources taken in probe
+  iounmap(bram_a_dev_info->base_addr);
+  release_mem_region(bram_a_dev_info->mem_start,
+                     bram_a_dev_info->mem_end - bram_a_dev_info->mem_start + 1);
+  kfree(bram_a_dev_info);
+  printk(KERN_WARNING "bram_a_dev_remove: Bram A device removed\n");
+}
+
+static void bram_b_dev_remove() {
+  // Free resources taken in probe
+  iounmap(bram_b_dev_info->base_addr);
+  release_mem_region(bram_b_dev_info->mem_start,
+                     bram_b_dev_info->mem_end - bram_b_dev_info->mem_start + 1);
+  kfree(bram_b_dev_info);
+  printk(KERN_WARNING "bram_b_dev_remove: Bram A device removed\n");
+}
+
+static void bram_c_dev_remove() {
+  // Free resources taken in probe
+  iounmap(bram_c_dev_info->base_addr);
+  release_mem_region(bram_c_dev_info->mem_start,
+                     bram_c_dev_info->mem_end - bram_c_dev_info->mem_start + 1);
+  kfree(bram_c_dev_info);
+  printk(KERN_WARNING "bram_c_dev_remove: Bram A device removed\n");
+}
+
+static void matmul_dev_remove() {
+  // Free resources taken in probe
+  iounmap(matmul_dev_info->base_addr);
+  release_mem_region(matmul_dev_info->mem_start,
+                     matmul_dev_info->mem_end - matmul_dev_info->mem_start + 1);
+  kfree(matmul_dev_info);
+  printk(KERN_WARNING "matmul_dev_remove: Bram A device removed\n");
+}
+
+static int matmul_remove(struct platform_device *pdev) {
+  // Konstante izvucene iz device tree-a
+  if (strcmp(pdev->name, "40000000.axi_bram_ctrl") == 0) {
+    bram_a_dev_remove();
+  } else if (strcmp(pdev->name, "42000000.axi_bram_ctrl") == 0) {
+    bram_b_dev_remove();
+  } else if (strcmp(pdev->name, "44000000.axi_bram_ctrl") == 0) {
+    bram_c_dev_remove();
+  } else if (strcmp(pdev->name, "43c00000.matrix_multiplier") == 0) {
+    matmul_dev_remove();
   } else {
     printk(KERN_ALERT "matmul_probe: Unexpected platform device name: %s\n", pdev->name);
     return -ENODEV;
   }
 
-    printk(KERN_ALERT "matmul_probe: Device name: %s; addr: %p\n", pdev->name, *d);
-
-  // Free resources taken in probe
-  iounmap((*d)->base_addr);
-  release_mem_region((*d)->mem_start,
-                     (*d)->mem_end - (*d)->mem_start + 1);
-  kfree(*d);
   printk(KERN_WARNING "matmul_remove: Matmul driver removed\n");
 
   return 0;
