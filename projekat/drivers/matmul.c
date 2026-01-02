@@ -306,14 +306,13 @@ static ssize_t matmul_read_(char __user *buf, size_t len) {
     return 0;
   }
 
-  unsigned int ready = ioread32(matmul_base_addr);
-  unsigned int start = ioread32(matmul_base_addr + 4);
-  unsigned int n = ioread32(matmul_base_addr + 8);
-  unsigned int m = ioread32(matmul_base_addr + 12);
-  unsigned int p = ioread32(matmul_base_addr + 16);
+  unsigned int ready_reg = ioread32(matmul_base_addr);
+  unsigned int start_reg = ioread32(matmul_base_addr + 4);
+  unsigned int n_reg = ioread32(matmul_base_addr + 8);
+  unsigned int m_reg = ioread32(matmul_base_addr + 12);
+  unsigned int p_reg = ioread32(matmul_base_addr + 16);
 
-  len = sprintf(buff, "ready=%d;start=%d;n=%d;m=%d;p=%d\n", ready, start, n, m,
-                p);
+  len = sprintf(buff, "ready=%d;start=%d;n=%d;m=%d;p=%d\n", ready_reg, start_reg, n_reg, m_reg, p_reg);
   ret = copy_to_user(buf, buff, len);
 
   if (ret)
@@ -330,6 +329,7 @@ static ssize_t matmul_write_(const char __user *buf, size_t length) {
   int n_reg = 0;
   int m_reg = 0;
   int p_reg = 0;
+  int start_reg = 0;
   
   ret = copy_from_user(buff, buf, length);
   if (ret) {
@@ -350,9 +350,9 @@ static ssize_t matmul_write_(const char __user *buf, size_t length) {
     return length;
   }
 
-  ret = sscanf(buff, "start=%d", &m_);
+  ret = sscanf(buff, "start=%d", &start_reg);
   if (ret == 1) {
-    iowrite32(m_, matmul_base_addr + 4);
+    iowrite32(start_reg, matmul_base_addr + 4);
     printk(KERN_INFO "MATMUL write OK\n");
     return length;
   }
