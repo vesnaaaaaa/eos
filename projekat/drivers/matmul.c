@@ -25,6 +25,7 @@ MODULE_ALIAS("custom:matmul");
 #define NUM_DEVICES 4
 
 #define BUFF_SIZE 128
+#define MAX_MATRIX_VALUE 4095
 #define BRAM_LINE_SIZE 7
 #define MATMUL_REG_SIZE_BYTES 20
 #define BRAM_SIZE_BYTES (4 * BRAM_LINE_SIZE * BRAM_LINE_SIZE)
@@ -120,8 +121,8 @@ static ssize_t bram_a_write(const char __user *buf, size_t length) {
     char e = buff[i];
 
     if (e == ',' || e == ';') {
-      if (current_number > 4095) {
-        printk(KERN_ERR "All matrix elements must be between 0 and 4095.\n");
+      if (current_number > MAX_MATRIX_VALUE) {
+        printk(KERN_ERR "All matrix elements must be between 0 and %d.\n", MAX_MATRIX_VALUE);
         return -EFAULT;
       } else {
         if (first_row_length > 0) {
@@ -162,7 +163,7 @@ static ssize_t bram_a_write(const char __user *buf, size_t length) {
         current_number = current_number * 10 + current_digit;
       } else {
         printk(KERN_ERR
-               "All matrix elements must be numbers between 0 and 4095!\n");
+               "All matrix elements must be numbers between 0 and %d!\n", MAX_MATRIX_VALUE);
         return -EFAULT;
       }
     }
@@ -192,8 +193,8 @@ static ssize_t bram_b_write(const char __user *buf, size_t length) {
     char e = buff[i];
 
     if (e == ',' || e == ';') {
-      if (current_number > 4095) {
-        printk(KERN_ERR "All matrix elements must be between 0 and 4095.\n");
+      if (current_number > MAX_MATRIX_VALUE) {
+        printk(KERN_ERR "All matrix elements must be between 0 and %d.\n", MAX_MATRIX_VALUE);
         return -EFAULT;
       } else {
         if (first_row_length > 0) {
@@ -234,7 +235,7 @@ static ssize_t bram_b_write(const char __user *buf, size_t length) {
         current_number = current_number * 10 + current_digit;
       } else {
         printk(KERN_ERR
-               "All matrix elements must be numbers between 0 and 4095!\n");
+               "All matrix elements must be numbers between 0 and %d!\n", MAX_MATRIX_VALUE);
         return -EFAULT;
       }
     }
@@ -250,9 +251,11 @@ static ssize_t bram_c_read(char __user *buf, size_t len) {
   int row;
   int col;
   int bram_pos;
-  int mat_pos;
-  char c;
-  char buff[BUFF_SIZE];
+  int mat_val;
+  int mat_val_strlen;
+  char mat_val_buff[5];
+  int bram_c_read_pos;
+  char bram_c_read_buff[BUFF_SIZE];
   void __iomem *bram_c_base_addr = bram_c_dev_info->base_addr;
 
   if (endRead == 1) {
@@ -261,33 +264,41 @@ static ssize_t bram_c_read(char __user *buf, size_t len) {
   }
 
   if (mat_dims.ready == 1) {
-      mat_pos = 0;
+      // We know the matrix format, write a formatted string.
+      bram_c_read_pos = 0;
       for (row = 0; row < mat_dims.n; row++) {
           for (col = 0; col < mat_dims.p; col++) {
               bram_pos = row * mat_dims.n + col;
-              c = ((char)ioread32(bram_c_base_addr + bram_pos * 4)) + '0';
-              buff[mat_pos] = c;
-              mat_pos += 1;
+              mat_val = ioread32(bram_c_base_addr + bram_pos * 4);
+	      if (mat_val > MAX_MATRIX_VALUE) {
+                  printk(KERN_ERR "Unexpected matrix value %d. All matrix elements should be numbers between 0 and %d!\n", mat_val, MAX_MATRIX_VALUE);
+		  return -EFAULT;
+	      }
+	      sprintf(mat_val_buff, "%d", mat_val);
+	      mat_val_strlen = strlen(mat_val_buff);
+	      memcpy(&bram_c_read_buff[bram_c_read_pos], mat_val_buff, mat_val_strlen); 
+	      bram_c_read_pos += mat_val_strlen;
               if (col == (mat_dims.p - 1)) {
-        	  buff[mat_pos] = ';';
+        	  bram_c_read_buff[bram_c_read_pos] = ';';
               } else {
-        	  buff[mat_pos] = ',';
+        	  bram_c_read_buff[bram_c_read_pos] = ',';
               }
-              mat_pos += 1;
+              bram_c_read_pos += 1;
           }
       }
-      buff[mat_pos + 1] = '\n';
-      buff[mat_pos + 2] = '\0';
+      bram_c_read_buff[bram_c_read_pos + 1] = '\n';
+      bram_c_read_buff[bram_c_read_pos + 2] = '\0';
   } else {
+      // We dont know the matrix format yet, write values without formatting.
       for (int i = 0; i < 49; i++) {
-          buff[i] = ((char)ioread32(bram_c_base_addr + i * 4)) + '0';
+          bram_c_read_buff[i] = ((char)ioread32(bram_c_base_addr + i * 4)) + '0';
       }
-      buff[50] = '\n';
-      buff[51] = '\0';
+      bram_c_read_buff[50] = '\n';
+      bram_c_read_buff[51] = '\0';
   }
 
   len = 64;
-  ret = copy_to_user(buf, buff, len);
+  ret = copy_to_user(buf, bram_c_read_buff, len);
   if (ret)
     return -EFAULT;
 
