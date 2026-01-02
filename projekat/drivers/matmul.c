@@ -48,7 +48,7 @@ struct dev_info {
 };
 
 struct matrix_dims {
-    int m;
+    int n;
     int p;
     int ready;
 };
@@ -262,9 +262,9 @@ static ssize_t bram_c_read(char __user *buf, size_t len) {
 
   if (mat_dims.ready == 1) {
       mat_pos = 0;
-      for (row = 0; row < mat_dims.m; row++) {
+      for (row = 0; row < mat_dims.n; row++) {
           for (col = 0; col < mat_dims.p; col++) {
-              bram_pos = row * mat_dims.m + col;
+              bram_pos = row * mat_dims.n + col;
               c = ((char)ioread32(bram_c_base_addr + bram_pos * 4)) + '0';
               buff[mat_pos] = c;
               mat_pos += 1;
@@ -327,9 +327,9 @@ static ssize_t matmul_write_(const char __user *buf, size_t length) {
   void __iomem *matmul_base_addr = matmul_dev_info->base_addr;
   char buff[BUFF_SIZE];
   int ret = 0;
-  int m_ = 0;
-  int n_ = 0;
-  int p_ = 0;
+  int n_reg = 0;
+  int m_reg = 0;
+  int p_reg = 0;
   
   ret = copy_from_user(buff, buf, length);
   if (ret) {
@@ -338,13 +338,13 @@ static ssize_t matmul_write_(const char __user *buf, size_t length) {
   }
   buff[length] = '\0';
   
-  ret = sscanf(buff, "dim=%d,%d,%d", &n_, &m_, &p_);
+  ret = sscanf(buff, "dim=%d,%d,%d", &n_reg, &m_reg, &p_reg);
   if (ret == 3) {
-    iowrite32(m_, matmul_base_addr + 8);
-    iowrite32(n_, matmul_base_addr + 12);
-    iowrite32(p_, matmul_base_addr + 16);
-    mat_dims.m = m_;
-    mat_dims.p = p_;
+    iowrite32(n_reg, matmul_base_addr + 8);
+    iowrite32(m_reg, matmul_base_addr + 12);
+    iowrite32(p_reg, matmul_base_addr + 16);
+    mat_dims.n = n_reg;
+    mat_dims.p = p_reg;
     mat_dims.ready = 1;
     printk(KERN_INFO "MATMUL write OK\n");
     return length;
