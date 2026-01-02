@@ -103,197 +103,194 @@ MODULE_DEVICE_TABLE(of, matmul_of_match);
 static ssize_t bram_a_write(const char __user *buf, size_t length) {
   char buff[BUFF_SIZE];
   int ret = 0;
-  return 0;
-  // void __iomem *bram_a_base_addr = dev_info->base_addr + BRAM_A_ADDR_OFFSET;
+  void __iomem *bram_a_base_addr = bram_a_dev_info->base_addr;
 
-  // ret = copy_from_user(buff, buf, length);
-  // if (ret) {
-  //   printk("copy from user failed \n");
-  //   return -EFAULT;
-  // }
+  ret = copy_from_user(buff, buf, length);
+  if (ret) {
+    printk("copy from user failed \n");
+    return -EFAULT;
+  }
 
-  // int first_row_length = 0;
-  // int current_row_length = 0;
-  // int current_number = 0;
-  // int mat_element_count = 0;
+  int first_row_length = 0;
+  int current_row_length = 0;
+  int current_number = 0;
+  int mat_element_count = 0;
 
-  // for (int i = 0; i < length - 1; i++) {
-  //   char e = buff[i];
+  for (int i = 0; i < length - 1; i++) {
+    char e = buff[i];
 
-  //   if (e == ',' || e == ';') {
-  //     if (current_number > 4095) {
-  //       printk(KERN_ERR "All matrix elements must be between 0 and 4095.\n");
-  //       return -EFAULT;
-  //     } else {
-  //       if (first_row_length > 0) {
-  //           int current_col = mat_element_count / first_row_length + 1;
-  //           if (current_col > BRAM_LINE_SIZE) {
-  //       	printk(KERN_ERR "Matrix dimensions too large (maximum allowed size 7x7).\n");
-  //       	return -EFAULT;
-  //           }
-  //       }
-  //       if (current_row_length >= BRAM_LINE_SIZE) {
-  //           printk(KERN_ERR "Matrix dimensions too large (maximum allowed size 7x7).\n");
-  //           return -EFAULT;
-  //       }
+    if (e == ',' || e == ';') {
+      if (current_number > 4095) {
+        printk(KERN_ERR "All matrix elements must be between 0 and 4095.\n");
+        return -EFAULT;
+      } else {
+        if (first_row_length > 0) {
+            int current_col = mat_element_count / first_row_length + 1;
+            if (current_col > BRAM_LINE_SIZE) {
+        	printk(KERN_ERR "Matrix dimensions too large (maximum allowed size 7x7).\n");
+        	return -EFAULT;
+            }
+        }
+        if (current_row_length >= BRAM_LINE_SIZE) {
+            printk(KERN_ERR "Matrix dimensions too large (maximum allowed size 7x7).\n");
+            return -EFAULT;
+        }
 
-  //       int offset = mat_element_count * 4;
-  //       iowrite32(current_number, bram_a_base_addr + offset);
+        int offset = mat_element_count * 4;
+        iowrite32(current_number, bram_a_base_addr + offset);
 
-  //       current_number = 0;
-  //       mat_element_count = mat_element_count + 1;
-  //       current_row_length = current_row_length + 1;
-  //     }
+        current_number = 0;
+        mat_element_count = mat_element_count + 1;
+        current_row_length = current_row_length + 1;
+      }
 
-  //     if (e == ';') {
-  //       if (first_row_length == 0) {
-  //         first_row_length = current_row_length;
-  //       } else {
-  //         if (current_row_length != first_row_length) {
-  //           printk(KERN_ERR "Invalid matrix format.\n");
-  //           return -EFAULT;
-  //         }
-  //       }
+      if (e == ';') {
+        if (first_row_length == 0) {
+          first_row_length = current_row_length;
+        } else {
+          if (current_row_length != first_row_length) {
+            printk(KERN_ERR "Invalid matrix format.\n");
+            return -EFAULT;
+          }
+        }
 
-  //       current_row_length = 0;
-  //     }
-  //   } else {
-  //     if (e >= '0' && e <= '9') {
-  //       int current_digit = e - '0';
-  //       current_number = current_number * 10 + current_digit;
-  //     } else {
-  //       printk(KERN_ERR
-  //              "All matrix elements must be numbers between 0 and 4095!\n");
-  //       return -EFAULT;
-  //     }
-  //   }
-  // }
+        current_row_length = 0;
+      }
+    } else {
+      if (e >= '0' && e <= '9') {
+        int current_digit = e - '0';
+        current_number = current_number * 10 + current_digit;
+      } else {
+        printk(KERN_ERR
+               "All matrix elements must be numbers between 0 and 4095!\n");
+        return -EFAULT;
+      }
+    }
+  }
 
-  // return length;
+  return length;
 }
 
 static ssize_t bram_b_write(const char __user *buf, size_t length) {
   char buff[BUFF_SIZE];
   int ret = 0;
-  return 0;
- //  void __iomem *bram_b_base_addr = dev_info->base_addr + BRAM_B_ADDR_OFFSET;
+  void __iomem *bram_b_base_addr = bram_b_dev_info->base_addr;
 
- //  ret = copy_from_user(buff, buf, length);
- //  if (ret) {
- //    printk("copy from user failed \n");
- //    return -EFAULT;
- //  }
+  ret = copy_from_user(buff, buf, length);
+  if (ret) {
+    printk("copy from user failed \n");
+    return -EFAULT;
+  }
 
- //  int first_row_length = 0;
- //  int current_row_length = 0;
- //  int current_number = 0;
- //  int mat_element_count = 0;
+  int first_row_length = 0;
+  int current_row_length = 0;
+  int current_number = 0;
+  int mat_element_count = 0;
 
- //  for (int i = 0; i < length - 1; i++) {
- //    char e = buff[i];
+  for (int i = 0; i < length - 1; i++) {
+    char e = buff[i];
 
- //    if (e == ',' || e == ';') {
- //      if (current_number > 4095) {
- //        printk(KERN_ERR "All matrix elements must be between 0 and 4095.\n");
- //        return -EFAULT;
- //      } else {
- //        if (first_row_length > 0) {
- //            int current_col = mat_element_count / first_row_length + 1;
- //            if (current_col > BRAM_LINE_SIZE) {
- //        	printk(KERN_ERR "Matrix dimensions too large (maximum allowed size 7x7).\n");
- //        	return -EFAULT;
- //            }
- //        }
- //        if (current_row_length >= BRAM_LINE_SIZE) {
- //            printk(KERN_ERR "Matrix dimensions too large (maximum allowed size 7x7).\n");
- //            return -EFAULT;
- //        }
+    if (e == ',' || e == ';') {
+      if (current_number > 4095) {
+        printk(KERN_ERR "All matrix elements must be between 0 and 4095.\n");
+        return -EFAULT;
+      } else {
+        if (first_row_length > 0) {
+            int current_col = mat_element_count / first_row_length + 1;
+            if (current_col > BRAM_LINE_SIZE) {
+        	printk(KERN_ERR "Matrix dimensions too large (maximum allowed size 7x7).\n");
+        	return -EFAULT;
+            }
+        }
+        if (current_row_length >= BRAM_LINE_SIZE) {
+            printk(KERN_ERR "Matrix dimensions too large (maximum allowed size 7x7).\n");
+            return -EFAULT;
+        }
 
- //        int offset = mat_element_count * 4;
- //        iowrite32(current_number, bram_b_base_addr + offset);
+        int offset = mat_element_count * 4;
+        iowrite32(current_number, bram_b_base_addr + offset);
 
- //        current_number = 0;
- //        mat_element_count = mat_element_count + 1;
- //        current_row_length = current_row_length + 1;
- //      }
+        current_number = 0;
+        mat_element_count = mat_element_count + 1;
+        current_row_length = current_row_length + 1;
+      }
 
- //      if (e == ';') {
- //        if (first_row_length == 0) {
- //          first_row_length = current_row_length;
- //        } else {
- //          if (current_row_length != first_row_length) {
- //            printk(KERN_ERR "Invalid matrix format.\n");
- //            return -EFAULT;
- //          }
- //        }
+      if (e == ';') {
+        if (first_row_length == 0) {
+          first_row_length = current_row_length;
+        } else {
+          if (current_row_length != first_row_length) {
+            printk(KERN_ERR "Invalid matrix format.\n");
+            return -EFAULT;
+          }
+        }
 
- //        current_row_length = 0;
- //      }
- //    } else {
- //      if (e >= '0' && e <= '9') {
- //        int current_digit = e - '0';
- //        current_number = current_number * 10 + current_digit;
- //      } else {
- //        printk(KERN_ERR
- //               "All matrix elements must be numbers between 0 and 4095!\n");
- //        return -EFAULT;
- //      }
- //    }
- //  }
+        current_row_length = 0;
+      }
+    } else {
+      if (e >= '0' && e <= '9') {
+        int current_digit = e - '0';
+        current_number = current_number * 10 + current_digit;
+      } else {
+        printk(KERN_ERR
+               "All matrix elements must be numbers between 0 and 4095!\n");
+        return -EFAULT;
+      }
+    }
+  }
 
- //  return length;
+  return length;
 }
 
 static ssize_t bram_c_read(char __user *buf, size_t len) {
-  return 0;
-  // static int endRead = 0;
-  // int ret;
-  // int row;
-  // int col;
-  // int bram_pos;
-  // int mat_pos;
-  // char c;
-  // char buff[BUFF_SIZE];
-  // void __iomem *bram_c_base_addr = dev_info->base_addr + BRAM_C_ADDR_OFFSET;
+  static int endRead = 0;
+  int ret;
+  int row;
+  int col;
+  int bram_pos;
+  int mat_pos;
+  char c;
+  char buff[BUFF_SIZE];
+  void __iomem *bram_c_base_addr = bram_c_dev_info->base_addr;
 
-  // if (endRead) {
-  //   endRead = 0;
-  //   return 0;
-  // }
+  if (endRead) {
+    endRead = 0;
+    return 0;
+  }
 
-  // if (mat_dims.ready == 1) {
-  //     mat_pos = 0;
-  //     for (row = 0; row < mat_dims.m; row++) {
-  //         for (col = 0; col < mat_dims.p; col++) {
-  //             bram_pos = row * mat_dims.m + col;
-  //             c = ((char)ioread32(bram_c_base_addr + bram_pos * 4)) + '0';
-  //             buff[mat_pos] = c;
-  //             mat_pos += 1;
-  //             if (col == (mat_dims.p - 1)) {
-  //       	  buff[mat_pos] = ';';
-  //             } else {
-  //       	  buff[mat_pos] = ',';
-  //             }
-  //             mat_pos += 1;
-  //         }
-  //     }
-  //     buff[mat_pos + 1] = '\n';
-  //     buff[mat_pos + 2] = '\0';
-  // } else {
-  //     for (int i = 0; i < 49; i++) {
-  //         buff[i] = ((char)ioread32(bram_c_base_addr + i * 4)) + '0';
-  //     }
-  //     buff[50] = '\n';
-  //     buff[51] = '\0';
-  // }
+  if (mat_dims.ready == 1) {
+      mat_pos = 0;
+      for (row = 0; row < mat_dims.m; row++) {
+          for (col = 0; col < mat_dims.p; col++) {
+              bram_pos = row * mat_dims.m + col;
+              c = ((char)ioread32(bram_c_base_addr + bram_pos * 4)) + '0';
+              buff[mat_pos] = c;
+              mat_pos += 1;
+              if (col == (mat_dims.p - 1)) {
+        	  buff[mat_pos] = ';';
+              } else {
+        	  buff[mat_pos] = ',';
+              }
+              mat_pos += 1;
+          }
+      }
+      buff[mat_pos + 1] = '\n';
+      buff[mat_pos + 2] = '\0';
+  } else {
+      for (int i = 0; i < 49; i++) {
+          buff[i] = ((char)ioread32(bram_c_base_addr + i * 4)) + '0';
+      }
+      buff[50] = '\n';
+      buff[51] = '\0';
+  }
 
-  // len = 64;
-  // ret = copy_to_user(buf, buff, len);
-  // if (ret)
-  //   return -EFAULT;
+  len = 64;
+  ret = copy_to_user(buf, buff, len);
+  if (ret)
+    return -EFAULT;
 
-  // endRead = 1;
-  // return len;
+  endRead = 1;
+  return len;
 }
 
 static ssize_t matmul_read_(char __user *buf, size_t len) {
