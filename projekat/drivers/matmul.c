@@ -338,7 +338,7 @@ static ssize_t matmul_write_(const char __user *buf, size_t length) {
   }
   buff[length] = '\0';
   
-  ret = sscanf(buff, "dim=%d,%d,%d", &m_, &n_, &p_);
+  ret = sscanf(buff, "dim=%d,%d,%d", &n_, &m_, &p_);
   if (ret == 3) {
     iowrite32(m_, matmul_base_addr + 8);
     iowrite32(n_, matmul_base_addr + 12);
