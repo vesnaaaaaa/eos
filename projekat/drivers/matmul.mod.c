@@ -56,10 +56,11 @@ __used __section("__versions") = {
 	{ 0xae353d77, "arm_copy_from_user" },
 	{ 0xbcab6ee6, "sscanf" },
 	{ 0x822137e2, "arm_heavy_mb" },
+	{ 0x2196324, "__aeabi_idiv" },
 	{ 0x7d3f43d5, "platform_driver_unregister" },
 	{ 0x4bcbe5aa, "cdev_del" },
-	{ 0x3c3ff9fd, "sprintf" },
 	{ 0x51a910c0, "arm_copy_to_user" },
+	{ 0x3c3ff9fd, "sprintf" },
 	{ 0x69d6813f, "module_layout" },
 };
 

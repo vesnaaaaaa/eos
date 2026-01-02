@@ -168,6 +168,7 @@ static ssize_t bram_a_write(const char __user *buf, size_t length) {
     }
   }
 
+  printk(KERN_INFO "BRAM A write OK\n");
   return length;
 }
 
@@ -239,6 +240,7 @@ static ssize_t bram_b_write(const char __user *buf, size_t length) {
     }
   }
 
+  printk(KERN_INFO "BRAM B write OK\n");
   return length;
 }
 
@@ -344,12 +346,14 @@ static ssize_t matmul_write_(const char __user *buf, size_t length) {
     mat_dims.m = m_;
     mat_dims.p = p_;
     mat_dims.ready = 1;
+    printk(KERN_INFO "MATMUL write OK\n");
     return length;
   }
 
   ret = sscanf(buff, "start=%d", &m_);
   if (ret == 1) {
     iowrite32(m_, matmul_base_addr + 4);
+    printk(KERN_INFO "MATMUL write OK\n");
     return length;
   }
 

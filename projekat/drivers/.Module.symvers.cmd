@@ -1,0 +1,1 @@
+cmd_/root/docs/eos/projekat/drivers/Module.symvers :=  sed 's/ko$$/o/'  /root/docs/eos/projekat/drivers/modules.order | scripts/mod/modpost -m     -o /root/docs/eos/projekat/drivers/Module.symvers -n -e -i Module.symvers -T - 
