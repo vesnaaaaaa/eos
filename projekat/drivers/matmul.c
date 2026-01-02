@@ -255,7 +255,7 @@ static ssize_t bram_c_read(char __user *buf, size_t len) {
   char buff[BUFF_SIZE];
   void __iomem *bram_c_base_addr = bram_c_dev_info->base_addr;
 
-  if (endRead) {
+  if (endRead == 1) {
     endRead = 0;
     return 0;
   }
