@@ -53,12 +53,6 @@ struct matrix_dims {
     int ready;
 };
 
-// Global constants
-// static const char *bram_a_pdev_name = ;
-// static const char *bram_b_pdev_name = ;
-// static const char *bram_c_pdev_name = ;
-// static const char *matmul_pdev_name = ;
-
 // Global variables
 static struct class *matmul_class;
 static struct device *matmul_device;
@@ -104,40 +98,6 @@ static struct of_device_id matmul_of_match[] = {
     {/* end of list */},
 };
 MODULE_DEVICE_TABLE(of, matmul_of_match);
-
-static struct dev_info* read_dev_address(enum Device dev) {
-    switch (dev) {
-      case BRAM_A:
-        return bram_a_dev_info;
-      case BRAM_B:
-        return bram_b_dev_info;
-      case BRAM_C:
-        return bram_c_dev_info;
-      case MATMUL:
-        return matmul_dev_info;
-      default:
-        return NULL;
-    }
-}
-
-static void write_dev_address(enum Device dev, struct dev_info* addr) {
-    switch (dev) {
-      case BRAM_A:
-        bram_a_dev_info = addr;
-        break;
-      case BRAM_B:
-        bram_b_dev_info = addr;
-        break;
-      case BRAM_C:
-        bram_c_dev_info = addr;
-        break;
-      case MATMUL:
-        matmul_dev_info = addr;
-        break;
-      default:
-        break;
-    }
-}
 
 // Implementation of device-specific operations
 static ssize_t bram_a_write(const char __user *buf, size_t length) {
