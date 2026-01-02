@@ -1,1 +1,0 @@
-cmd_/root/docs/eos/projekat/drivers/matmul.ko := ld -r -EL -z noexecstack --no-warn-rwx-segments --build-id=sha1  -T scripts/module.lds -o /root/docs/eos/projekat/drivers/matmul.ko /root/docs/eos/projekat/drivers/matmul.o /root/docs/eos/projekat/drivers/matmul.mod.o;  true
