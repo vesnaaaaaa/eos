@@ -742,11 +742,29 @@ static int __init matmul_init(void) {
   printk(KERN_INFO "matmul_init: Class created\n");
 
   // Initialize devices
-  for (i = 0; i < NUM_DEVICES; i++) {
-    printk(KERN_INFO "matmul_init: Created node %d\n", i);
-    scnprintf(buff, BUFF_SIZE, "matmul%d", i);
+  for (minor = 0; minor < NUM_DEVICES; minor++) {
+	switch(minor){
+	case MATMUL:
+		scnprintf(buff, BUFF_SIZE, "matmul");
+	break;
+	case BRAM_A:
+		scnprintf(buff, BUFF_SIZE, "bram_a");
+	break;
+	case BRAM_B:
+		scnprintf(buff, BUFF_SIZE, "bram_b");
+	break;
+	case BRAM_C:
+		scnprintf(buff, BUFF_SIZE, "bram_c");
+	break;
+	default:
+		printk(KERN_ERR "Invalid minor number %d\n", minor);
+		return -EFAULT;
+	break;
+	}
+	
+    printk(KERN_INFO "matmul_init: Created node %s\n", buff);
     matmul_device = device_create(matmul_class, NULL,
-                                  MKDEV(MAJOR(first_dev_id), i), NULL, buff);
+                                  MKDEV(MAJOR(first_dev_id), minor), NULL, buff);
     if (matmul_device == NULL) {
       printk(KERN_ERR "matmul_init: Failed to create device\n");
       goto fail_class;
