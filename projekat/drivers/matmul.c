@@ -722,7 +722,7 @@ static struct platform_driver matmul_driver = {
 static int __init matmul_init(void) {
   char buff[BUFF_SIZE] = {0};
   int ret = 0;
-  int i;
+  int minor;
 
   // Allocate device numbers
   ret = alloc_chrdev_region(&first_dev_id, 0, NUM_DEVICES, DRIVER_NAME);
@@ -789,8 +789,8 @@ static int __init matmul_init(void) {
   return 0;
 
 fail_device:
-  for (i = 0; i < NUM_DEVICES; i++) {
-    device_destroy(matmul_class, MKDEV(MAJOR(first_dev_id), i));
+  for (minor = 0; minor < NUM_DEVICES; minor++) {
+    device_destroy(matmul_class, MKDEV(MAJOR(first_dev_id), minor));
   }
 fail_class:
   class_destroy(matmul_class);
@@ -800,14 +800,14 @@ fail_chrdev:
 }
 
 static void __exit matmul_exit(void) {
-  int i;
+  int minor;
 
   // Unregister platform driver
   platform_driver_unregister(&matmul_driver);
   // Clean up device
   cdev_del(matmul_cdev);
-  for (i = 0; i < NUM_DEVICES; i++) {
-    device_destroy(matmul_class, MKDEV(MAJOR(first_dev_id), i));
+  for (minor = 0; minor < NUM_DEVICES; minor++) {
+    device_destroy(matmul_class, MKDEV(MAJOR(first_dev_id), minor));
   }
 
   // Clean up class and device numbers
